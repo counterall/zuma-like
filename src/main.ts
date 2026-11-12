@@ -1,6 +1,6 @@
 import './style.css';
 import { Game, type GameState } from './game/game';
-import { pickLayout } from './game/level';
+import { levelForScreen, sameBoard } from './game/level';
 import { Renderer } from './game/renderer';
 import { THEME_ORDER, THEMES, type ThemeId } from './game/themes';
 import { loadSettings, saveSettings } from './settings';
@@ -57,7 +57,7 @@ const game = new Game({
     meterFill.style.width = `${Math.min(100, progress * 100).toFixed(1)}%`;
     meter.classList.toggle('danger', danger > 0);
   },
-}, () => pickLayout(window.innerWidth, window.innerHeight));
+}, () => levelForScreen(window.innerWidth, window.innerHeight));
 
 /** The last result shown, so it can be re-rendered when the language changes. */
 let lastResult: { won: boolean; isBest: boolean } | null = null;
@@ -267,10 +267,10 @@ window.addEventListener('blur', () => game.pause());
 function resize(): void {
   const w = window.innerWidth;
   const h = window.innerHeight;
-  // Outside of a running game, switch to the layout that fits the new screen shape.
-  // A game in progress keeps its board (scaled to fit) until the next restart.
-  const idle = game.state === 'title' || game.state === 'won' || game.state === 'lost';
-  if (idle && pickLayout(w, h) !== game.level.layout) game.reset();
+  // On the title screen, switch to the board that fits the new screen shape. Anywhere else
+  // the board stays (scaled to fit): a game in progress keeps it, and after a game ends
+  // resetting would wipe the score the result screen shows. "Play again" builds a fresh board.
+  if (game.state === 'title' && !sameBoard(game.level, w, h)) game.reset();
   renderer.setLevel(game.level);
   renderer.resize(w, h, window.devicePixelRatio || 1);
   phoneNote.hidden = Math.min(w, h) >= 600;
