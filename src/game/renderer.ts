@@ -196,6 +196,15 @@ export class Renderer {
     base();
   }
 
+  /** A marble with a dark outline, so it reads on any background (e.g. green on a green frog or lawn). */
+  private drawOutlinedBall(ctx: CanvasRenderingContext2D, color: number, x: number, y: number, rot: number, scale: number): void {
+    ctx.fillStyle = 'rgba(10, 30, 15, 0.7)';
+    ctx.beginPath();
+    ctx.arc(x, y, BALL_RADIUS * scale + 3, 0, Math.PI * 2);
+    ctx.fill();
+    this.drawBall(ctx, color, x, y, rot, scale);
+  }
+
   private drawProjectiles(ctx: CanvasRenderingContext2D, game: Game): void {
     for (const p of game.projectiles) {
       const color = this.theme.balls[p.color % this.theme.balls.length];
@@ -207,7 +216,7 @@ export class Renderer {
         ctx.fill();
       });
       ctx.globalAlpha = 1;
-      this.drawBall(ctx, p.color, p.x, p.y, game.time * 12, 1);
+      this.drawOutlinedBall(ctx, p.color, p.x, p.y, game.time * 12, 1);
     }
   }
 
@@ -315,14 +324,9 @@ export class Renderer {
     ctx.restore();
 
     // Loaded marble in the frog's mouth, next marble riding on its back.
-    // A dark outline keeps green marbles readable against the green frog.
-    const outlined = (color: number, x: number, y: number, rot: number, scale: number): void => {
-      ctx.fillStyle = 'rgba(10, 30, 15, 0.7)';
-      ctx.beginPath();
-      ctx.arc(x, y, BALL_RADIUS * scale + 3, 0, Math.PI * 2);
-      ctx.fill();
-      this.drawBall(ctx, color, x, y, rot, scale);
-    };
+    // The outline keeps green marbles readable against the green frog.
+    const outlined = (color: number, x: number, y: number, rot: number, scale: number): void =>
+      this.drawOutlinedBall(ctx, color, x, y, rot, scale);
     const ease = 1 - Math.pow(1 - s.load, 3);
     const reach = MUZZLE - s.recoil * 8;
     if (game.state === 'playing' || game.state === 'paused' || game.state === 'title') {
@@ -336,7 +340,8 @@ export class Renderer {
   private drawEffects(ctx: CanvasRenderingContext2D, game: Game): void {
     const balls = this.theme.balls;
     const colorOf = (c: number | string): string => (typeof c === 'number' ? balls[c % balls.length] : c);
-    const additive = this.theme.particle !== 'bubble';
+    // Glowing stars add light; bubbles and petals are drawn normally.
+    const additive = this.theme.particle === 'star';
 
     for (const r of game.rings) {
       if (r.life < 0) continue;
@@ -380,6 +385,22 @@ export class Renderer {
           ctx.fill();
           ctx.stroke();
           break;
+        case 'petal': {
+          // Petals flutter down, spinning and swaying.
+          ctx.fillStyle = color;
+          ctx.save();
+          ctx.translate(p.x + Math.sin(p.life * 9 + p.spin) * 6, p.y + p.life * 40);
+          ctx.rotate(p.spin * p.life * 1.5);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, size, size * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.beginPath();
+          ctx.ellipse(-size * 0.25, -size * 0.12, size * 0.45, size * 0.18, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          break;
+        }
       }
     }
     ctx.globalCompositeOperation = 'source-over';

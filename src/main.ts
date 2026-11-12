@@ -12,6 +12,7 @@ const $$ = (sel: string): HTMLElement[] => [...document.querySelectorAll<HTMLEle
 const PREVIEW_BG: Record<ThemeId, string> = {
   cosmic: 'radial-gradient(circle at 25% 30%, #ff32a0aa, transparent 55%), radial-gradient(circle at 80% 70%, #1ec8ff99, transparent 55%), #1a0850',
   reef: 'linear-gradient(180deg, #11d3e0 0 28%, #f2c97d 28% 33%, #0b3048 33% 67%, #f2c97d 67% 72%, #0a8fc4 72%)',
+  classic: 'linear-gradient(180deg, #a6dc55 0 28%, #d9ae6c 28% 33%, #4a321b 33% 67%, #d9ae6c 67% 72%, #73bb37 72%)',
 };
 
 const settings = loadSettings();
