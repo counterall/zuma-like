@@ -330,7 +330,8 @@ const butterflies = [
 
 const classic: Theme = {
   id: 'classic',
-  balls: ['#ff4d4d', '#ffd43b', '#4dabff', '#8ce04a', '#c77dff'],
+  // Teal rather than grass green, so no marble matches the lawn.
+  balls: ['#ff4d4d', '#ffd43b', '#4dabff', '#2fd8c0', '#c77dff'],
   ballStyle: 'glossy',
   particle: 'petal',
   // A dark, worn dirt path with a sandy edge, so every marble pops against it.
@@ -346,7 +347,7 @@ const classic: Theme = {
   },
   shooter: { light: '#4cc38a', dark: '#17603a', flower: '#ff6fb5' },
   hole: { core: '#140c04', arms: ['#d9ae6c', '#8f6d45', '#fff3d1'] },
-  portal: ['#ffd43b', '#8ce04a', '#ffffff'],
+  portal: ['#ffd43b', '#2fd8c0', '#ffffff'],
   ui: { accent: '#ff7a1a', accent2: '#4dd2ff', text: '#ffffff', panel: 'rgba(74, 48, 22, 0.94)' },
   audio: { wave: 'triangle', cutoff: 3800 },
   drawStatic(ctx, w, h) {
@@ -399,8 +400,8 @@ const classic: Theme = {
     }
     for (const d of meadow.daisies) daisy(ctx, d.x * w, d.y * h, 3.2 * d.s * unit, d.rot);
 
-    // Pond in the bottom-right corner, with a stone rim and lily pads.
-    const px = w - 40 * unit;
+    // Pond in the bottom-left corner, with a stone rim and lily pads.
+    const px = 40 * unit;
     const py = h - 30 * unit;
     ctx.fillStyle = '#a49c88';
     ctx.beginPath();
@@ -417,7 +418,7 @@ const classic: Theme = {
     ctx.beginPath();
     ctx.ellipse(px, py, 128 * unit, 90 * unit, -0.3, 0, Math.PI * 2);
     ctx.fill();
-    for (const [lx, ly, ls] of [[-80, -30, 16], [-40, -60, 12], [-95, 15, 11]]) {
+    for (const [lx, ly, ls] of [[80, -30, 16], [40, -60, 12], [95, 15, 11]]) {
       ctx.fillStyle = '#3fae4a';
       ctx.beginPath();
       ctx.moveTo(px + lx * unit, py + ly * unit);
@@ -425,27 +426,21 @@ const classic: Theme = {
       ctx.fill();
     }
 
-    // Boulders in the bottom-left corner.
-    boulder(ctx, 30 * unit, h - 60 * unit, 70 * unit, 55 * unit, 0.3);
-    boulder(ctx, 95 * unit, h - 18 * unit, 45 * unit, 32 * unit, -0.2);
-    boulder(ctx, 10 * unit, h - 140 * unit, 38 * unit, 30 * unit, 0.8);
+    // A few boulders half-buried along the right edge.
+    boulder(ctx, w - 18 * unit, h * 0.42, 52 * unit, 40 * unit, 0.5);
+    boulder(ctx, w - 6 * unit, h * 0.42 + 62 * unit, 34 * unit, 26 * unit, -0.3);
+    boulder(ctx, w - 50 * unit, h * 0.42 - 50 * unit, 22 * unit, 17 * unit, 1.1);
 
     // Bushes around the edges, some in bloom.
     const blossoms = ['#ff8fc4', '#ffffff', null, '#ffd43b'];
     const spots: [number, number, number][] = [
       [0.04, 0.12, 70], [0.24, 0.02, 48], [0.55, 0.0, 58], [0.78, 0.05, 44], [0.97, 0.18, 75],
-      [0.0, 0.5, 64], [1.0, 0.55, 56], [0.35, 1.0, 60], [0.62, 0.98, 46], [0.5, 0.5, 34],
+      [0.0, 0.5, 64], [0.97, 0.98, 70], [0.35, 1.0, 60], [0.62, 0.98, 46],
     ];
     spots.forEach(([fx, fy, s], i) => bush(ctx, fx * w, fy * h, s * unit, r, blossoms[i % blossoms.length]));
   },
   drawAnimated(ctx, w, h, t) {
     const unit = Math.min(w, h) / 600;
-    // Slow cloud shadows drifting across the lawn.
-    for (let i = 0; i < 3; i++) {
-      const x = (((t * 0.012 + i * 0.37) % 1.4) - 0.2) * w;
-      const y = h * (0.2 + i * 0.3);
-      blob(ctx, x, y, 220 * unit, 'rgba(20, 60, 0, 0.07)');
-    }
     // Butterflies fluttering on lazy loops.
     for (const b of butterflies) {
       const a = t * b.speed * Math.PI * 2 + b.phase;

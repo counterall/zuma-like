@@ -1,7 +1,12 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { loadSettings, saveSettings } from './settings';
 
 const store = new Map<string, string>();
+const realStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+afterAll(() => {
+  if (realStorage) Object.defineProperty(globalThis, 'localStorage', realStorage);
+  else delete (globalThis as { localStorage?: unknown }).localStorage;
+});
 beforeEach(() => {
   store.clear();
   Object.assign(globalThis, {

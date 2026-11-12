@@ -196,6 +196,15 @@ export class Renderer {
     base();
   }
 
+  /** A marble with a dark outline, so it reads on any background (e.g. green on a green frog or lawn). */
+  private drawOutlinedBall(ctx: CanvasRenderingContext2D, color: number, x: number, y: number, rot: number, scale: number): void {
+    ctx.fillStyle = 'rgba(10, 30, 15, 0.7)';
+    ctx.beginPath();
+    ctx.arc(x, y, BALL_RADIUS * scale + 3, 0, Math.PI * 2);
+    ctx.fill();
+    this.drawBall(ctx, color, x, y, rot, scale);
+  }
+
   private drawProjectiles(ctx: CanvasRenderingContext2D, game: Game): void {
     for (const p of game.projectiles) {
       const color = this.theme.balls[p.color % this.theme.balls.length];
@@ -207,7 +216,7 @@ export class Renderer {
         ctx.fill();
       });
       ctx.globalAlpha = 1;
-      this.drawBall(ctx, p.color, p.x, p.y, game.time * 12, 1);
+      this.drawOutlinedBall(ctx, p.color, p.x, p.y, game.time * 12, 1);
     }
   }
 
@@ -315,14 +324,9 @@ export class Renderer {
     ctx.restore();
 
     // Loaded marble in the frog's mouth, next marble riding on its back.
-    // A dark outline keeps green marbles readable against the green frog.
-    const outlined = (color: number, x: number, y: number, rot: number, scale: number): void => {
-      ctx.fillStyle = 'rgba(10, 30, 15, 0.7)';
-      ctx.beginPath();
-      ctx.arc(x, y, BALL_RADIUS * scale + 3, 0, Math.PI * 2);
-      ctx.fill();
-      this.drawBall(ctx, color, x, y, rot, scale);
-    };
+    // The outline keeps green marbles readable against the green frog.
+    const outlined = (color: number, x: number, y: number, rot: number, scale: number): void =>
+      this.drawOutlinedBall(ctx, color, x, y, rot, scale);
     const ease = 1 - Math.pow(1 - s.load, 3);
     const reach = MUZZLE - s.recoil * 8;
     if (game.state === 'playing' || game.state === 'paused' || game.state === 'title') {
