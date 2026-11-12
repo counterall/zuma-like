@@ -336,7 +336,8 @@ export class Renderer {
   private drawEffects(ctx: CanvasRenderingContext2D, game: Game): void {
     const balls = this.theme.balls;
     const colorOf = (c: number | string): string => (typeof c === 'number' ? balls[c % balls.length] : c);
-    const additive = this.theme.particle !== 'bubble';
+    // Glowing stars add light; bubbles and petals are drawn normally.
+    const additive = this.theme.particle === 'star';
 
     for (const r of game.rings) {
       if (r.life < 0) continue;
@@ -380,6 +381,22 @@ export class Renderer {
           ctx.fill();
           ctx.stroke();
           break;
+        case 'petal': {
+          // Petals flutter down, spinning and swaying.
+          ctx.fillStyle = color;
+          ctx.save();
+          ctx.translate(p.x + Math.sin(p.life * 9 + p.spin) * 6, p.y + p.life * 40);
+          ctx.rotate(p.spin * p.life * 1.5);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, size, size * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.55)';
+          ctx.beginPath();
+          ctx.ellipse(-size * 0.25, -size * 0.12, size * 0.45, size * 0.18, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          break;
+        }
       }
     }
     ctx.globalCompositeOperation = 'source-over';

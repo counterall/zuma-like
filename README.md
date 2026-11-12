@@ -25,7 +25,7 @@ pnpm build       # type-check + production build into dist/
 - `src/game/level.ts`: level definition (track shape, ball count, colours, speeds) in three board layouts, picked from the screen shape when a game starts: `wide` (desktop and landscape tablets, the main target), `tall` (portrait screens) and `compact` (landscape phones). The `wide` board is 600 units tall and its width follows the screen's aspect ratio (4:3 to 2:1), so the track fills the screen and marbles render large; its marble count scales with the track length.
 - `src/game/game.ts`: game state, shooter, projectiles, effects and scoring.
 - `src/game/renderer.ts`, `sprites.ts`: canvas rendering with cached background, track and ball sprites.
-- `src/game/themes.ts`: the Cosmic and Reef themes (palettes, backgrounds, track styles, particles, sound timbre).
+- `src/game/themes.ts`: the Cosmic, Reef and Classic themes (palettes, backgrounds, track styles, particles, sound timbre). Backgrounds are drawn in code; there are no image assets.
 - `src/game/audio.ts`: synthesised sound effects (no audio files).
 - `src/game/frog.ts`: the frog-on-a-lily-pad launcher.
 - `src/i18n.ts`: UI text in English and Simplified Chinese. The language is picked from the browser on first visit and can be changed in Settings. Static text in `index.html` is tagged with `data-i18n` keys.

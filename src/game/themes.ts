@@ -1,6 +1,6 @@
-export type ThemeId = 'cosmic' | 'reef';
+export type ThemeId = 'cosmic' | 'reef' | 'classic';
 export type BallStyle = 'glossy' | 'pearl';
-export type ParticleStyle = 'star' | 'bubble';
+export type ParticleStyle = 'star' | 'bubble' | 'petal';
 
 export interface Theme {
   id: ThemeId;
@@ -235,5 +235,243 @@ const reef: Theme = {
   },
 };
 
-export const THEMES: Record<ThemeId, Theme> = { cosmic, reef };
-export const THEME_ORDER: ThemeId[] = ['cosmic', 'reef'];
+// ---------------------------------------------------------------- Classic
+
+/** Scattered meadow details, in 0..1 screen fractions so they work at any size. */
+const meadow = (() => {
+  const r = mulberry(33);
+  return {
+    tufts: Array.from({ length: 260 }, () => ({ x: r(), y: r(), s: 0.6 + r() * 0.8, shade: r() })),
+    daisies: Array.from({ length: 70 }, () => ({ x: r(), y: r(), s: 0.7 + r() * 0.6, rot: r() * Math.PI })),
+    clover: Array.from({ length: 30 }, () => ({ x: r(), y: r(), s: 0.8 + r() * 0.6, rot: r() * Math.PI * 2 })),
+  };
+})();
+
+/** A round bush seen from above: overlapping leafy clumps with a few blossoms. */
+function bush(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, r: () => number, blossom: string | null): void {
+  ctx.fillStyle = 'rgba(20, 60, 10, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(x + size * 0.12, y + size * 0.16, size * 1.05, size * 0.95, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const lobes = 7 + Math.floor(r() * 4);
+  const layers: [string, number][] = [['#2f8a2a', 1], ['#46a83a', 0.78], ['#6cc94a', 0.5]];
+  for (const [color, k] of layers) {
+    ctx.fillStyle = color;
+    for (let i = 0; i < lobes; i++) {
+      const a = (i / lobes) * Math.PI * 2 + r() * 0.4;
+      const d = size * 0.55 * k;
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(a) * d - size * 0.08 * (1 - k), y + Math.sin(a) * d - size * 0.1 * (1 - k), size * 0.45 * k, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  if (!blossom) return;
+  for (let i = 0; i < 9; i++) {
+    const a = r() * Math.PI * 2;
+    const d = r() * size * 0.75;
+    ctx.fillStyle = blossom;
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, size * 0.07, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff6c8';
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, size * 0.025, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function boulder(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, rot: number): void {
+  ctx.fillStyle = 'rgba(20, 50, 10, 0.3)';
+  ctx.beginPath();
+  ctx.ellipse(x + rx * 0.1, y + ry * 0.2, rx, ry, rot, 0, Math.PI * 2);
+  ctx.fill();
+  const g = ctx.createRadialGradient(x - rx * 0.35, y - ry * 0.4, rx * 0.1, x, y, rx * 1.1);
+  g.addColorStop(0, '#e9e6dc');
+  g.addColorStop(0.6, '#b5b0a3');
+  g.addColorStop(1, '#7d786c');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(70, 66, 58, 0.5)';
+  ctx.lineWidth = Math.max(1, rx * 0.04);
+  // A jagged crack plus a sunlit highlight.
+  ctx.beginPath();
+  ctx.moveTo(x + rx * 0.15, y - ry * 0.55);
+  ctx.lineTo(x + rx * 0.02, y - ry * 0.2);
+  ctx.lineTo(x + rx * 0.2, y + ry * 0.05);
+  ctx.lineTo(x + rx * 0.08, y + ry * 0.35);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.beginPath();
+  ctx.ellipse(x - rx * 0.4, y - ry * 0.45, rx * 0.22, ry * 0.12, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function daisy(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, rot: number): void {
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 6; i++) {
+    const a = rot + (i * Math.PI) / 3;
+    ctx.beginPath();
+    ctx.ellipse(x + Math.cos(a) * size, y + Math.sin(a) * size, size * 0.85, size * 0.42, a, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#ffc928';
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.6, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+const butterflies = [
+  { color: '#ffb02e', speed: 0.11, phase: 0, ax: 0.38, ay: 0.3 },
+  { color: '#ff6fb5', speed: 0.08, phase: 2.1, ax: 0.42, ay: 0.36 },
+  { color: '#7cc8ff', speed: 0.095, phase: 4.2, ax: 0.3, ay: 0.4 },
+];
+
+const classic: Theme = {
+  id: 'classic',
+  balls: ['#ff4d4d', '#ffd43b', '#4dabff', '#8ce04a', '#c77dff'],
+  ballStyle: 'glossy',
+  particle: 'petal',
+  // A dark, worn dirt path with a sandy edge, so every marble pops against it.
+  track: {
+    edge: '#d9ae6c',
+    edgeWidth: 58,
+    fill: '#4a321b',
+    fillWidth: 48,
+    center: 'rgba(255, 228, 170, 0.16)',
+    glow: 'rgba(40, 70, 10, 0.45)',
+    glowBlur: 12,
+    pebbles: ['#6b4a2a', '#7d5a36', '#35230f', '#8f6d45'],
+  },
+  shooter: { light: '#4cc38a', dark: '#17603a', flower: '#ff6fb5' },
+  hole: { core: '#140c04', arms: ['#d9ae6c', '#8f6d45', '#fff3d1'] },
+  portal: ['#ffd43b', '#8ce04a', '#ffffff'],
+  ui: { accent: '#ff7a1a', accent2: '#4dd2ff', text: '#ffffff', panel: 'rgba(74, 48, 22, 0.94)' },
+  audio: { wave: 'triangle', cutoff: 3800 },
+  drawStatic(ctx, w, h) {
+    const unit = Math.min(w, h) / 600;
+    // Sunny lawn with soft light and shade patches.
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, '#a6dc55');
+    g.addColorStop(0.5, '#8fcf45');
+    g.addColorStop(1, '#73bb37');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    const m = Math.max(w, h);
+    blob(ctx, w * 0.3, h * 0.25, m * 0.35, 'rgba(255, 255, 190, 0.22)');
+    blob(ctx, w * 0.75, h * 0.7, m * 0.3, 'rgba(40, 110, 20, 0.16)');
+    blob(ctx, w * 0.1, h * 0.85, m * 0.25, 'rgba(40, 110, 20, 0.12)');
+    // Faint mown stripes.
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(-0.5);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.045)';
+    const band = 70 * unit;
+    for (let x = -m; x < m; x += band * 2) ctx.fillRect(x, -m, band, m * 2);
+    ctx.restore();
+
+    const r = mulberry(91);
+    // Grass tufts and clover.
+    ctx.lineCap = 'round';
+    for (const t of meadow.tufts) {
+      const x = t.x * w;
+      const y = t.y * h;
+      const s = 5 * t.s * unit;
+      ctx.strokeStyle = t.shade < 0.5 ? 'rgba(40, 110, 25, 0.55)' : 'rgba(200, 240, 120, 0.55)';
+      ctx.lineWidth = 1.4 * unit;
+      ctx.beginPath();
+      ctx.moveTo(x - s * 0.6, y - s);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x + s * 0.6, y - s);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + s * 0.1, y - s * 1.2);
+      ctx.stroke();
+    }
+    for (const c of meadow.clover) {
+      ctx.fillStyle = 'rgba(60, 140, 40, 0.75)';
+      for (let i = 0; i < 3; i++) {
+        const a = c.rot + (i * Math.PI * 2) / 3;
+        ctx.beginPath();
+        ctx.arc(c.x * w + Math.cos(a) * 3.2 * c.s * unit, c.y * h + Math.sin(a) * 3.2 * c.s * unit, 3 * c.s * unit, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    for (const d of meadow.daisies) daisy(ctx, d.x * w, d.y * h, 3.2 * d.s * unit, d.rot);
+
+    // Pond in the bottom-right corner, with a stone rim and lily pads.
+    const px = w - 40 * unit;
+    const py = h - 30 * unit;
+    ctx.fillStyle = '#a49c88';
+    ctx.beginPath();
+    ctx.ellipse(px, py, 150 * unit, 110 * unit, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    for (let i = 0; i < 22; i++) {
+      const a = (i / 22) * Math.PI * 2;
+      boulder(ctx, px + Math.cos(a) * 140 * unit, py + Math.sin(a) * 100 * unit, (11 + r() * 6) * unit, (8 + r() * 4) * unit, r() * 3);
+    }
+    const water = ctx.createRadialGradient(px - 40 * unit, py - 30 * unit, 10 * unit, px, py, 140 * unit);
+    water.addColorStop(0, '#9be9ff');
+    water.addColorStop(1, '#2e9fd6');
+    ctx.fillStyle = water;
+    ctx.beginPath();
+    ctx.ellipse(px, py, 128 * unit, 90 * unit, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    for (const [lx, ly, ls] of [[-80, -30, 16], [-40, -60, 12], [-95, 15, 11]]) {
+      ctx.fillStyle = '#3fae4a';
+      ctx.beginPath();
+      ctx.moveTo(px + lx * unit, py + ly * unit);
+      ctx.arc(px + lx * unit, py + ly * unit, ls * unit, 0.4, Math.PI * 2 - 0.1);
+      ctx.fill();
+    }
+
+    // Boulders in the bottom-left corner.
+    boulder(ctx, 30 * unit, h - 60 * unit, 70 * unit, 55 * unit, 0.3);
+    boulder(ctx, 95 * unit, h - 18 * unit, 45 * unit, 32 * unit, -0.2);
+    boulder(ctx, 10 * unit, h - 140 * unit, 38 * unit, 30 * unit, 0.8);
+
+    // Bushes around the edges, some in bloom.
+    const blossoms = ['#ff8fc4', '#ffffff', null, '#ffd43b'];
+    const spots: [number, number, number][] = [
+      [0.04, 0.12, 70], [0.24, 0.02, 48], [0.55, 0.0, 58], [0.78, 0.05, 44], [0.97, 0.18, 75],
+      [0.0, 0.5, 64], [1.0, 0.55, 56], [0.35, 1.0, 60], [0.62, 0.98, 46], [0.5, 0.5, 34],
+    ];
+    spots.forEach(([fx, fy, s], i) => bush(ctx, fx * w, fy * h, s * unit, r, blossoms[i % blossoms.length]));
+  },
+  drawAnimated(ctx, w, h, t) {
+    const unit = Math.min(w, h) / 600;
+    // Slow cloud shadows drifting across the lawn.
+    for (let i = 0; i < 3; i++) {
+      const x = (((t * 0.012 + i * 0.37) % 1.4) - 0.2) * w;
+      const y = h * (0.2 + i * 0.3);
+      blob(ctx, x, y, 220 * unit, 'rgba(20, 60, 0, 0.07)');
+    }
+    // Butterflies fluttering on lazy loops.
+    for (const b of butterflies) {
+      const a = t * b.speed * Math.PI * 2 + b.phase;
+      const x = w * (0.5 + b.ax * Math.sin(a));
+      const y = h * (0.5 + b.ay * Math.sin(a * 1.7 + 1));
+      const dir = Math.atan2(b.ay * 1.7 * Math.cos(a * 1.7 + 1) * h, b.ax * Math.cos(a) * w);
+      const flap = 0.35 + 0.65 * Math.abs(Math.sin(t * 14 + b.phase));
+      const s = 7 * unit;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(dir);
+      ctx.fillStyle = b.color;
+      for (const side of [1, -1]) {
+        ctx.beginPath();
+        ctx.ellipse(s * 0.2, side * s * 0.8 * flap, s * 0.9, s * 0.75 * flap, 0, 0, Math.PI * 2);
+        ctx.ellipse(-s * 0.6, side * s * 0.6 * flap, s * 0.6, s * 0.5 * flap, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#3a2410';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s * 0.9, s * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  },
+};
+
+export const THEMES: Record<ThemeId, Theme> = { cosmic, reef, classic };
+export const THEME_ORDER: ThemeId[] = ['cosmic', 'reef', 'classic'];

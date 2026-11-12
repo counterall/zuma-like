@@ -36,3 +36,18 @@ describe.each(THEME_ORDER)('%s theme', (id) => {
     expect(contrast(ball, theme.track.fill)).toBeGreaterThanOrEqual(3);
   });
 });
+
+describe('theme list', () => {
+  it('offers Cosmic, Reef and Classic, in that order', () => {
+    expect(THEME_ORDER).toEqual(['cosmic', 'reef', 'classic']);
+    for (const id of THEME_ORDER) expect(THEMES[id].id).toBe(id);
+  });
+
+  it('gives Classic its own look', () => {
+    const classic = THEMES.classic;
+    for (const other of THEME_ORDER.filter((id) => id !== 'classic')) {
+      expect(classic.balls).not.toEqual(THEMES[other].balls);
+      expect(classic.track.fill).not.toBe(THEMES[other].track.fill);
+    }
+  });
+});
