@@ -1,6 +1,6 @@
 import { Sfx } from './audio';
 import { BALL_DIAMETER, BALL_RADIUS, Chain, type Ball, type ChainEvent } from './chain';
-import { createLevel1, WORLD, type Level } from './level';
+import { createLevel1, type LayoutId, type Level } from './level';
 
 export type GameState = 'title' | 'playing' | 'paused' | 'losing' | 'lost' | 'won';
 
@@ -79,18 +79,23 @@ export class Game {
   popped = 0;
   time = 0;
   shake = 0;
-  aim = { x: 500, y: 200 };
+  aim = { x: 0, y: 0 };
   /** True while a touch is held down (shows the aim guide on mobile). */
   aiming = false;
   readonly sfx = new Sfx();
   private warnTimer = 0;
 
-  constructor(private readonly cb: GameCallbacks) {
+  constructor(
+    private readonly cb: GameCallbacks,
+    /** Returns the board layout that suits the current screen; read whenever a game is set up. */
+    private readonly chooseLayout: () => LayoutId,
+  ) {
     this.reset();
   }
 
+  /** Build a fresh board, using the layout that fits the screen right now. */
   reset(): void {
-    this.level = createLevel1();
+    this.level = createLevel1(this.chooseLayout());
     this.chain = new Chain(this.level.path, this.level.config);
     this.shooter = {
       x: this.level.shooter.x,
@@ -102,6 +107,7 @@ export class Game {
       load: 1,
       cooldown: 0,
     };
+    this.aim = { x: this.shooter.x, y: this.shooter.y - 200 };
     this.projectiles = [];
     this.particles = [];
     this.rings = [];
@@ -266,7 +272,7 @@ export class Game {
         this.chain.insert(hit, ahead, p.color, p.x, p.y);
         this.sfx.insert();
         this.projectiles.splice(i, 1);
-      } else if (p.x < -80 || p.y < -80 || p.x > WORLD + 80 || p.y > WORLD + 80) {
+      } else if (p.x < -80 || p.y < -80 || p.x > this.level.width + 80 || p.y > this.level.height + 80) {
         this.projectiles.splice(i, 1);
       }
     }
@@ -283,7 +289,7 @@ export class Game {
     for (let i = 0; i < 160; i++) {
       x += dx * 8;
       y += dy * 8;
-      if (x < -20 || y < -20 || x > WORLD + 20 || y > WORLD + 20) return { x, y, hit: false };
+      if (x < -20 || y < -20 || x > this.level.width + 20 || y > this.level.height + 20) return { x, y, hit: false };
       for (const b of this.chain.balls) {
         if (b.s < BALL_RADIUS) continue;
         if (Math.abs(b.x - x) < hitDist && Math.abs(b.y - y) < hitDist && Math.hypot(b.x - x, b.y - y) < hitDist) {
@@ -362,13 +368,14 @@ export class Game {
   }
 
   private celebrate(): void {
+    const { width, height } = this.level;
     for (let i = 0; i < 12; i++) {
-      const x = 150 + Math.random() * 700;
-      const y = 150 + Math.random() * 600;
+      const x = width * (0.15 + Math.random() * 0.7);
+      const y = height * (0.15 + Math.random() * 0.6);
       this.burst(x, y, Math.floor(Math.random() * this.level.config.colors), 24);
       this.rings.push({ x, y, life: -i * 0.08, max: 0.7, color: i % this.level.config.colors, radius: 90 });
     }
-    this.floaters.push({ x: 500, y: 420, text: 'CLEARED!', life: 0, max: 2.2, size: 80, color: 'accent' });
+    this.floaters.push({ x: width / 2, y: height * 0.42, text: 'CLEARED!', life: 0, max: 2.2, size: Math.min(80, width / 9), color: 'accent' });
   }
 
   private updateEffects(dt: number): void {

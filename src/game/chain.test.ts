@@ -43,7 +43,7 @@ describe('TrackPath', () => {
   });
 
   it('builds a spiral with coils far enough apart for balls', () => {
-    const p = buildSpiral({ cx: 500, cy: 500, startRadius: 445, endRadius: 172, turns: 1.62, startAngle: Math.PI, squareness: 0.72 });
+    const p = buildSpiral({ cx: 500, cy: 500, startRx: 445, startRy: 445, endRx: 172, endRy: 172, turns: 1.62, startAngle: Math.PI, squareness: 0.72 });
     expect(p.length).toBeGreaterThan(2500);
   });
 });

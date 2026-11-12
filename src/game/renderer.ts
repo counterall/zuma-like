@@ -1,6 +1,6 @@
 import { BALL_DIAMETER, BALL_RADIUS } from './chain';
 import { MUZZLE, SHOOTER_RADIUS, type Game } from './game';
-import { WORLD } from './level';
+import type { Level } from './level';
 import type { TrackPath } from './path';
 import { buildBallSprites, mix, rgba, type BallSprites } from './sprites';
 import type { Theme } from './themes';
@@ -24,7 +24,7 @@ export class Renderer {
   private sprites!: BallSprites;
   private bgLayer = document.createElement('canvas');
   private trackLayer = document.createElement('canvas');
-  private path: TrackPath | null = null;
+  private level: Level | null = null;
   private readonly coarse = matchMedia('(pointer: coarse)').matches;
 
   constructor(readonly canvas: HTMLCanvasElement) {
@@ -36,9 +36,10 @@ export class Renderer {
     this.rebuild();
   }
 
-  setPath(path: TrackPath): void {
-    if (this.path === path) return;
-    this.path = path;
+  setLevel(level: Level): void {
+    if (this.level === level) return;
+    this.level = level;
+    this.fitBoard();
     this.rebuild();
   }
 
@@ -47,12 +48,21 @@ export class Renderer {
     v.width = width;
     v.height = height;
     v.dpr = Math.min(dpr, 2.5);
-    v.scale = Math.min(width / WORLD, height / WORLD) * 0.98;
-    v.ox = (width - WORLD * v.scale) / 2;
-    v.oy = (height - WORLD * v.scale) / 2;
     this.canvas.width = Math.round(width * v.dpr);
     this.canvas.height = Math.round(height * v.dpr);
+    this.fitBoard();
     this.rebuild();
+  }
+
+  /** Scale the board to fill the screen. Portrait boards leave room for the HUD above them. */
+  private fitBoard(): void {
+    const v = this.view;
+    const W = this.level?.width ?? 1000;
+    const H = this.level?.height ?? 1000;
+    const top = this.level?.layout === 'tall' ? Math.min(72, v.height * 0.09) : 0;
+    v.scale = Math.min(v.width / W, (v.height - top) / H) * 0.995;
+    v.ox = (v.width - W * v.scale) / 2;
+    v.oy = top + (v.height - top - H * v.scale) / 2;
   }
 
   /** CSS pixel → world coordinate. */
@@ -77,9 +87,9 @@ export class Renderer {
 
     const tr = this.trackLayer.getContext('2d')!;
     tr.clearRect(0, 0, pw, ph);
-    if (this.path) {
+    if (this.level) {
       tr.setTransform(v.scale * v.dpr, 0, 0, v.scale * v.dpr, v.ox * v.dpr, v.oy * v.dpr);
-      this.drawTrack(tr, this.path);
+      this.drawTrack(tr, this.level.path);
     }
   }
 

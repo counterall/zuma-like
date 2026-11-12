@@ -1,5 +1,6 @@
 import './style.css';
 import { Game, type GameState } from './game/game';
+import { pickLayout } from './game/level';
 import { Renderer } from './game/renderer';
 import { THEME_ORDER, THEMES, type ThemeId } from './game/themes';
 import { loadSettings, saveSettings } from './settings';
@@ -55,7 +56,7 @@ const game = new Game({
     meterFill.style.width = `${Math.min(100, progress * 100).toFixed(1)}%`;
     meter.classList.toggle('danger', danger > 0);
   },
-});
+}, () => pickLayout(window.innerWidth, window.innerHeight));
 
 function showResult(won: boolean): void {
   const isBest = game.score > settings.best;
@@ -232,10 +233,16 @@ window.addEventListener('blur', () => game.pause());
 function resize(): void {
   const w = window.innerWidth;
   const h = window.innerHeight;
+  // Outside of a running game, switch to the layout that fits the new screen shape.
+  // A game in progress keeps its board (scaled to fit) until the next restart.
+  const idle = game.state === 'title' || game.state === 'won' || game.state === 'lost';
+  if (idle && pickLayout(w, h) !== game.level.layout) game.reset();
+  renderer.setLevel(game.level);
   renderer.resize(w, h, window.devicePixelRatio || 1);
+  phoneNote.hidden = Math.min(w, h) >= 600;
 }
+const phoneNote = $('#phone-note');
 window.addEventListener('resize', resize);
-renderer.setPath(game.level.path);
 resize();
 
 let last = performance.now();
@@ -243,11 +250,11 @@ function frame(now: number): void {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   game.update(dt);
-  renderer.setPath(game.level.path);
+  renderer.setLevel(game.level);
   renderer.render(game);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
 // Dev-only handle for debugging from the console.
-if (import.meta.env.DEV) (window as unknown as { game: Game }).game = game;
+if (import.meta.env.DEV) Object.assign(window, { game, renderer });

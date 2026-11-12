@@ -67,8 +67,11 @@ export class TrackPath {
 export interface SpiralOptions {
   cx: number;
   cy: number;
-  startRadius: number;
-  endRadius: number;
+  /** Horizontal / vertical radii at the start and end, so the spiral can be stretched to fit the screen. */
+  startRx: number;
+  startRy: number;
+  endRx: number;
+  endRy: number;
   turns: number;
   startAngle: number;
   /** Superellipse exponent: 1 = circle, < 1 = squarer corners. */
@@ -84,12 +87,13 @@ export function buildSpiral(o: SpiralOptions): TrackPath {
   for (let i = 0; i <= samples; i++) {
     const t = i / samples;
     const theta = o.startAngle + t * total;
-    const r = o.startRadius + (o.endRadius - o.startRadius) * t;
+    const rx = o.startRx + (o.endRx - o.startRx) * t;
+    const ry = o.startRy + (o.endRy - o.startRy) * t;
     const c = Math.cos(theta);
     const sn = Math.sin(theta);
     pts.push({
-      x: o.cx + r * Math.sign(c) * Math.pow(Math.abs(c), o.squareness),
-      y: o.cy + r * Math.sign(sn) * Math.pow(Math.abs(sn), o.squareness),
+      x: o.cx + rx * Math.sign(c) * Math.pow(Math.abs(c), o.squareness),
+      y: o.cy + ry * Math.sign(sn) * Math.pow(Math.abs(sn), o.squareness),
     });
   }
   return new TrackPath(pts);

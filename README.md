@@ -22,7 +22,7 @@ npm run build    # type-check + production build into dist/
 
 - `src/game/chain.ts`: chain simulation (spawning, pushing, insertion, matching, gap retraction and combos). Has no rendering, so it's unit-tested.
 - `src/game/path.ts`: arc-length-parameterised track and the spiral generator.
-- `src/game/level.ts`: level definition (track shape, ball count, colours, speeds).
+- `src/game/level.ts`: level definition (track shape, ball count, colours, speeds) in three board layouts, picked from the screen shape when a game starts: `wide` (desktop and landscape tablets, the main target), `tall` (portrait screens) and `compact` (landscape phones).
 - `src/game/game.ts`: game state, shooter, projectiles, effects and scoring.
 - `src/game/renderer.ts`, `sprites.ts`: canvas rendering with cached background, track and ball sprites.
 - `src/game/themes.ts`: the Cosmic, Reef and Neon themes (palettes, backgrounds, track styles, particles, sound timbre).

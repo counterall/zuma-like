@@ -257,6 +257,16 @@ h3 {
   opacity: 0.7;
 }
 
+.phone-note {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.35;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
 .btn {
   font-family: inherit;
   font-weight: 800;
