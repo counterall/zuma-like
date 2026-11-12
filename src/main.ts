@@ -4,6 +4,7 @@ import { pickLayout } from './game/level';
 import { Renderer } from './game/renderer';
 import { THEME_ORDER, THEMES, type ThemeId } from './game/themes';
 import { loadSettings, saveSettings } from './settings';
+import { LANG_NAMES, LANGS, setLang, t, translateDom, type Lang } from './i18n';
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector<T>(sel)!;
 const $$ = (sel: string): HTMLElement[] => [...document.querySelectorAll<HTMLElement>(sel)];
@@ -14,6 +15,7 @@ const PREVIEW_BG: Record<ThemeId, string> = {
 };
 
 const settings = loadSettings();
+setLang(settings.lang);
 const canvas = $<HTMLCanvasElement>('#game');
 const renderer = new Renderer(canvas);
 const coarse = matchMedia('(pointer: coarse)').matches;
@@ -57,16 +59,25 @@ const game = new Game({
   },
 }, () => pickLayout(window.innerWidth, window.innerHeight));
 
+/** The last result shown, so it can be re-rendered when the language changes. */
+let lastResult: { won: boolean; isBest: boolean } | null = null;
+
 function showResult(won: boolean): void {
   const isBest = game.score > settings.best;
   if (isBest) {
     settings.best = game.score;
     saveSettings(settings);
   }
-  $('#result-title').textContent = won ? 'Cleared!' : 'Swallowed!';
-  $('#result-score').textContent = game.score.toLocaleString();
-  $('#result-best').textContent = isBest && game.score > 0 ? '★ New best score! ★' : `Best: ${settings.best.toLocaleString()}`;
+  lastResult = { won, isBest: isBest && game.score > 0 };
+  renderResult();
   showScreen('result');
+}
+
+function renderResult(): void {
+  if (!lastResult) return;
+  $('#result-title').textContent = t(lastResult.won ? 'result.won' : 'result.lost');
+  $('#result-score').textContent = game.score.toLocaleString();
+  $('#result-best').textContent = lastResult.isBest ? t('result.newBest') : t('result.best', { score: settings.best.toLocaleString() });
 }
 
 // ---------------------------------------------------------------- Theme & settings
@@ -86,21 +97,48 @@ function applyTheme(id: ThemeId): void {
 function buildThemeCards(): void {
   const list = $('#theme-list');
   for (const id of THEME_ORDER) {
-    const t = THEMES[id];
+    const theme = THEMES[id];
     const card = document.createElement('button');
     card.className = 'theme-card';
     card.type = 'button';
     card.dataset.theme = id;
     card.setAttribute('role', 'radio');
-    const dots = t.balls.map((c) => `<span class="dot" style="background:radial-gradient(circle at 35% 35%, #fff8, ${c} 55%); box-shadow:0 0 8px ${c}"></span>`).join('');
+    const dots = theme.balls.map((c) => `<span class="dot" style="background:radial-gradient(circle at 35% 35%, #fff8, ${c} 55%); box-shadow:0 0 8px ${c}"></span>`).join('');
     card.innerHTML = `<div class="preview" style="background:${PREVIEW_BG[id]}">${dots}</div>
-      <div><div class="name">${t.name}</div><div class="desc">${t.tagline}</div></div>`;
+      <div><div class="name" data-i18n="theme.${id}.name"></div><div class="desc" data-i18n="theme.${id}.tagline"></div></div>`;
     card.addEventListener('click', () => {
       settings.theme = id;
       saveSettings(settings);
       applyTheme(id);
     });
     list.appendChild(card);
+  }
+}
+
+function applyLang(lang: Lang): void {
+  setLang(lang);
+  translateDom();
+  for (const el of $$('.controls-hint')) el.textContent = t(coarse ? 'hint.touch' : 'hint.mouse');
+  for (const btn of $$('.lang-btn')) btn.setAttribute('aria-checked', String(btn.dataset.lang === lang));
+  renderResult();
+}
+
+function buildLangButtons(): void {
+  const list = $('#lang-list');
+  for (const lang of LANGS) {
+    const btn = document.createElement('button');
+    btn.className = 'lang-btn';
+    btn.type = 'button';
+    btn.dataset.lang = lang;
+    btn.lang = lang === 'zh' ? 'zh-Hans' : lang;
+    btn.setAttribute('role', 'radio');
+    btn.textContent = LANG_NAMES[lang];
+    btn.addEventListener('click', () => {
+      settings.lang = lang;
+      saveSettings(settings);
+      applyLang(lang);
+    });
+    list.appendChild(btn);
   }
 }
 
@@ -118,7 +156,9 @@ function closeSettings(): void {
 }
 
 buildThemeCards();
+buildLangButtons();
 applyTheme(settings.theme);
+applyLang(settings.lang);
 
 const soundOpt = $<HTMLInputElement>('#opt-sound');
 const aimOpt = $<HTMLInputElement>('#opt-aim');
@@ -135,11 +175,6 @@ aimOpt.addEventListener('change', () => {
   saveSettings(settings);
 });
 
-for (const el of $$('.controls-hint')) {
-  el.textContent = coarse
-    ? 'Drag to aim, release to shoot · Tap the launcher to swap balls'
-    : 'Aim with the mouse · Click to shoot · Right-click, Space or click the launcher to swap · P to pause';
-}
 
 // ---------------------------------------------------------------- Buttons
 

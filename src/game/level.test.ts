@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { BALL_DIAMETER, BALL_RADIUS } from './chain';
+import { PAD_RADIUS } from './frog';
 import { SHOOTER_RADIUS } from './game';
 import { createLevel1, pickLayout, type LayoutId } from './level';
 
-const TRACK_HALF = 29; // widest track edge (58) / 2
+const TRACK_HALF = 30; // widest track edge (Reef, 60) / 2
 
 describe.each<LayoutId>(['wide', 'compact', 'tall'])('%s layout', (layout) => {
   const level = createLevel1(layout);
@@ -35,6 +36,13 @@ describe.each<LayoutId>(['wide', 'compact', 'tall'])('%s layout', (layout) => {
     for (const p of samples) {
       const d = Math.hypot(p.x - level.shooter.x, p.y - level.shooter.y);
       expect(d).toBeGreaterThan(SHOOTER_RADIUS + BALL_RADIUS);
+    }
+  });
+
+  it('keeps the track clear of the frog\'s lily pad', () => {
+    for (const p of samples) {
+      const d = Math.hypot(p.x - level.shooter.x, p.y - level.shooter.y);
+      expect(d - TRACK_HALF).toBeGreaterThan(PAD_RADIUS);
     }
   });
 });

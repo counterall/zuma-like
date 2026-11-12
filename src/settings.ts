@@ -1,24 +1,33 @@
 import { THEMES, type ThemeId } from './game/themes';
+import { detectLang, isLang, type Lang } from './i18n';
 
 export interface Settings {
   theme: ThemeId;
+  lang: Lang;
   sound: boolean;
   aimGuide: boolean;
   best: number;
 }
 
 const KEY = 'chroma-coil:settings';
-const DEFAULTS: Settings = { theme: 'cosmic', sound: true, aimGuide: true, best: 0 };
+const browserLang = (): Lang => detectLang(typeof navigator === 'undefined' ? [] : navigator.languages ?? [navigator.language]);
+
+function defaults(): Settings {
+  return { theme: 'cosmic', lang: browserLang(), sound: true, aimGuide: true, best: 0 };
+}
 
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { ...DEFAULTS };
-    const parsed = { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
-    if (!(parsed.theme in THEMES)) parsed.theme = DEFAULTS.theme;
+    const base = defaults();
+    if (!raw) return base;
+    const parsed = { ...base, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (!(parsed.theme in THEMES)) parsed.theme = base.theme;
+    // Settings saved before language support have no lang: follow the browser.
+    if (!isLang(parsed.lang)) parsed.lang = base.lang;
     return parsed;
   } catch {
-    return { ...DEFAULTS };
+    return defaults();
   }
 }
 

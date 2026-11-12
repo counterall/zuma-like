@@ -19,19 +19,19 @@
   </head>
   <body>
     <div id="app">
-      <canvas id="game" aria-label="Chroma Coil game board"></canvas>
+      <canvas id="game" aria-label="Chroma Coil game board" data-i18n-aria="board.label"></canvas>
 
       <div id="hud" hidden>
         <div class="hud-left">
-          <div class="score-label">Score</div>
+          <div class="score-label" data-i18n="hud.score">Score</div>
           <div class="score" id="score">0</div>
-          <div class="meter" aria-label="Level progress"><div class="meter-fill" id="meter-fill"></div></div>
+          <div class="meter" aria-label="Level progress" data-i18n-aria="hud.progress"><div class="meter-fill" id="meter-fill"></div></div>
         </div>
         <div class="hud-right">
-          <button id="btn-pause" class="icon-btn" aria-label="Pause">
+          <button id="btn-pause" class="icon-btn" aria-label="Pause" data-i18n-aria="hud.pause">
             <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" /><rect x="14" y="5" width="4" height="14" rx="1.5" /></svg>
           </button>
-          <button class="icon-btn" data-open-settings aria-label="Settings">
+          <button class="icon-btn" data-open-settings aria-label="Settings" data-i18n-aria="btn.settings">
             <svg viewBox="0 0 24 24" class="stroke"><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2.2" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" /></svg>
           </button>
         </div>
@@ -40,20 +40,20 @@
       <section id="screen-title" class="screen">
         <div class="card">
           <h1 class="logo"><span class="l1">Chroma</span><span class="l2">Coil</span></h1>
-          <p class="tag">Shoot marbles into the rolling chain. Match 3 or more of a colour to pop them before they reach the vortex!</p>
-          <button id="btn-play" class="btn primary">Play</button>
-          <button class="btn ghost" data-open-settings>Settings</button>
+          <p class="tag" data-i18n="title.tag">Shoot marbles into the rolling chain. Match 3 or more of a colour to pop them before they reach the vortex!</p>
+          <button id="btn-play" class="btn primary" data-i18n="title.play">Play</button>
+          <button class="btn ghost" data-open-settings data-i18n="btn.settings">Settings</button>
           <p class="hint controls-hint"></p>
-          <p class="phone-note" id="phone-note" hidden>Best played on a tablet or desktop. Phones work too: the board reshapes itself to fit when you rotate.</p>
+          <p class="phone-note" id="phone-note" data-i18n="title.phoneNote" hidden>Best played on a tablet or desktop. Phones work too: the board reshapes itself to fit when you rotate.</p>
         </div>
       </section>
 
       <section id="screen-pause" class="screen" hidden>
         <div class="card">
-          <h2>Paused</h2>
-          <button id="btn-resume" class="btn primary">Resume</button>
-          <button class="btn ghost" data-restart>Restart</button>
-          <button class="btn ghost" data-open-settings>Settings</button>
+          <h2 data-i18n="pause.title">Paused</h2>
+          <button id="btn-resume" class="btn primary" data-i18n="btn.resume">Resume</button>
+          <button class="btn ghost" data-restart data-i18n="btn.restart">Restart</button>
+          <button class="btn ghost" data-open-settings data-i18n="btn.settings">Settings</button>
           <p class="hint controls-hint"></p>
         </div>
       </section>
@@ -61,23 +61,25 @@
       <section id="screen-result" class="screen" hidden>
         <div class="card">
           <h2 id="result-title">Cleared!</h2>
-          <p class="result-score"><span id="result-score">0</span><small>points</small></p>
+          <p class="result-score"><span id="result-score">0</span><small data-i18n="result.points">points</small></p>
           <p class="best" id="result-best"></p>
-          <button class="btn primary" data-restart>Play again</button>
-          <button class="btn ghost" data-open-settings>Settings</button>
+          <button class="btn primary" data-restart data-i18n="btn.playAgain">Play again</button>
+          <button class="btn ghost" data-open-settings data-i18n="btn.settings">Settings</button>
         </div>
       </section>
 
       <section id="screen-settings" class="screen" hidden>
         <div class="card wide">
-          <h2>Settings</h2>
-          <h3>Theme</h3>
-          <div class="themes" id="theme-list" role="radiogroup" aria-label="Theme"></div>
+          <h2 data-i18n="settings.title">Settings</h2>
+          <h3 data-i18n="settings.theme">Theme</h3>
+          <div class="themes" id="theme-list" role="radiogroup" aria-label="Theme" data-i18n-aria="settings.theme"></div>
+          <h3 data-i18n="settings.language">Language</h3>
+          <div class="langs" id="lang-list" role="radiogroup" aria-label="Language" data-i18n-aria="settings.language"></div>
           <div class="toggles">
-            <label class="toggle"><input type="checkbox" id="opt-sound" /><span class="switch"></span>Sound effects</label>
-            <label class="toggle"><input type="checkbox" id="opt-aim" /><span class="switch"></span>Aim guide</label>
+            <label class="toggle"><input type="checkbox" id="opt-sound" /><span class="switch"></span><span data-i18n="settings.sound">Sound effects</span></label>
+            <label class="toggle"><input type="checkbox" id="opt-aim" /><span class="switch"></span><span data-i18n="settings.aim">Aim guide</span></label>
           </div>
-          <button id="btn-settings-done" class="btn primary">Done</button>
+          <button id="btn-settings-done" class="btn primary" data-i18n="btn.done">Done</button>
         </div>
       </section>
     </div>

@@ -4,8 +4,6 @@ export type ParticleStyle = 'star' | 'bubble';
 
 export interface Theme {
   id: ThemeId;
-  name: string;
-  tagline: string;
   /** Five vivid ball colours. */
   balls: string[];
   ballStyle: BallStyle;
@@ -20,7 +18,8 @@ export interface Theme {
     glowBlur: number;
     pebbles?: string[];
   };
-  shooter: { body: [string, string]; ring: string; lights: string; barrel: string };
+  /** Lily pad under the frog launcher. */
+  shooter: { light: string; dark: string; flower: string };
   hole: { core: string; arms: string[] };
   portal: string[];
   ui: { accent: string; accent2: string; text: string; panel: string };
@@ -65,8 +64,6 @@ const cosmicStars = (() => {
 
 const cosmic: Theme = {
   id: 'cosmic',
-  name: 'Cosmic',
-  tagline: 'Nebulas, stardust & a hungry black hole',
   balls: ['#ff3d9a', '#22e4ff', '#9dff3a', '#ffcc1f', '#a35cff'],
   ballStyle: 'glossy',
   particle: 'star',
@@ -79,7 +76,7 @@ const cosmic: Theme = {
     glow: 'rgba(160, 110, 255, 0.9)',
     glowBlur: 26,
   },
-  shooter: { body: ['#e9e4ff', '#5a3dc8'], ring: '#ffcc1f', lights: '#22e4ff', barrel: '#2a1870' },
+  shooter: { light: '#5fe0a8', dark: '#127a5a', flower: '#ff3d9a' },
   hole: { core: '#000000', arms: ['#ff8a3d', '#ff3d9a', '#a35cff'] },
   portal: ['#22e4ff', '#a35cff', '#ffffff'],
   ui: { accent: '#ff3d9a', accent2: '#22e4ff', text: '#f4efff', panel: 'rgba(24, 10, 60, 0.92)' },
@@ -147,8 +144,6 @@ const reefBubbles = (() => {
 
 const reef: Theme = {
   id: 'reef',
-  name: 'Reef',
-  tagline: 'Sunlit lagoon, coral & pearly bubbles',
   balls: ['#ff5a3c', '#ffd93b', '#1fe39a', '#ff4fc3', '#3d7bff'],
   ballStyle: 'pearl',
   particle: 'bubble',
@@ -163,7 +158,7 @@ const reef: Theme = {
     glowBlur: 16,
     pebbles: ['#145a78', '#1d6f8f', '#0f4762', '#2a8aa8'],
   },
-  shooter: { body: ['#fff4fb', '#ff7fb4'], ring: '#ffd93b', lights: '#1fe39a', barrel: '#b8346f' },
+  shooter: { light: '#7be38a', dark: '#1b7a3c', flower: '#ff6fa8' },
   hole: { core: '#021a3a', arms: ['#7ff3ff', '#ffffff', '#3d7bff'] },
   portal: ['#ffd93b', '#ff5a3c', '#ffffff'],
   ui: { accent: '#ff5a3c', accent2: '#1fe39a', text: '#ffffff', panel: 'rgba(2, 60, 110, 0.92)' },

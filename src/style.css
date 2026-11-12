@@ -3,7 +3,7 @@
   --accent2: #22e4ff;
   --text: #f4efff;
   --panel: rgba(24, 10, 60, 0.92);
-  --font: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  --font: 'Baloo 2', 'Trebuchet MS', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Noto Sans SC', system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -388,6 +388,39 @@ h3 {
   opacity: 0.75;
 }
 
+.langs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.lang-btn {
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.lang-btn:hover {
+  transform: translateY(-2px);
+}
+
+.lang-btn[aria-checked='true'] {
+  border-color: var(--accent2);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent2) 55%, transparent);
+}
+
+/* Chinese text reads poorly with wide tracking. */
+:lang(zh) h3 {
+  letter-spacing: 0.08em;
+}
+
 .toggles {
   display: flex;
   flex-wrap: wrap;
@@ -442,7 +475,8 @@ h3 {
 .toggle input:focus-visible + .switch,
 .btn:focus-visible,
 .icon-btn:focus-visible,
-.theme-card:focus-visible {
+.theme-card:focus-visible,
+.lang-btn:focus-visible {
   outline: 3px solid var(--accent2);
   outline-offset: 2px;
 }

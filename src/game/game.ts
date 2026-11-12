@@ -1,6 +1,7 @@
 import { Sfx } from './audio';
 import { BALL_DIAMETER, BALL_RADIUS, Chain, type Ball, type ChainEvent } from './chain';
 import { createLevel1, type LayoutId, type Level } from './level';
+import { t } from '../i18n';
 
 export type GameState = 'title' | 'playing' | 'paused' | 'losing' | 'lost' | 'won';
 
@@ -318,9 +319,9 @@ export class Game {
           cy /= e.balls.length;
           this.floaters.push({ x: cx, y: cy - 10, text: `+${e.points}`, life: 0, max: 1.1, size: 30, color: e.balls[0].color });
           if (e.combo >= 2) {
-            this.floaters.push({ x: cx, y: cy - 52, text: `COMBO ×${e.combo}`, life: 0, max: 1.4, size: 38 + e.combo * 4, color: 'accent' });
+            this.floaters.push({ x: cx, y: cy - 52, text: t('fx.combo', { n: e.combo }), life: 0, max: 1.4, size: 38 + e.combo * 4, color: 'accent' });
           } else if (e.balls.length >= 5) {
-            this.floaters.push({ x: cx, y: cy - 52, text: 'GREAT!', life: 0, max: 1.2, size: 36, color: 'accent' });
+            this.floaters.push({ x: cx, y: cy - 52, text: t('fx.great'), life: 0, max: 1.2, size: 36, color: 'accent' });
           }
           this.shake = Math.min(14, this.shake + 3 + e.combo * 2 + e.balls.length * 0.5);
           this.sfx.pop(e.combo, e.balls.length);
@@ -375,7 +376,7 @@ export class Game {
       this.burst(x, y, Math.floor(Math.random() * this.level.config.colors), 24);
       this.rings.push({ x, y, life: -i * 0.08, max: 0.7, color: i % this.level.config.colors, radius: 90 });
     }
-    this.floaters.push({ x: width / 2, y: height * 0.42, text: 'CLEARED!', life: 0, max: 2.2, size: Math.min(80, width / 9), color: 'accent' });
+    this.floaters.push({ x: width / 2, y: height * 0.42, text: t('fx.cleared'), life: 0, max: 2.2, size: Math.min(80, width / 9), color: 'accent' });
   }
 
   private updateEffects(dt: number): void {

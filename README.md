@@ -5,7 +5,7 @@ A vivid marble-shooter for desktop and mobile browsers, built with Vite and Type
 ```bash
 pnpm install
 pnpm dev         # dev server (also on your LAN, so you can test on a phone)
-pnpm test        # unit tests (chain logic, board layouts, theme contrast)
+pnpm test        # unit tests (chain logic, board layouts, theme contrast, translations)
 pnpm build       # type-check + production build into dist/
 ```
 
@@ -15,7 +15,7 @@ pnpm build       # type-check + production build into dist/
 | ---------- | ----------------------------------------- | ---------------- |
 | Aim        | Move the mouse                            | Drag             |
 | Shoot      | Left click                                | Release          |
-| Swap balls | Right click, Space, or click the launcher | Tap the launcher |
+| Swap balls | Right click, Space, or click the frog | Tap the frog |
 | Pause      | P / Esc, or the pause button              | Pause button     |
 
 ## Layout
@@ -27,4 +27,6 @@ pnpm build       # type-check + production build into dist/
 - `src/game/renderer.ts`, `sprites.ts`: canvas rendering with cached background, track and ball sprites.
 - `src/game/themes.ts`: the Cosmic and Reef themes (palettes, backgrounds, track styles, particles, sound timbre).
 - `src/game/audio.ts`: synthesised sound effects (no audio files).
+- `src/game/frog.ts`: the frog-on-a-lily-pad launcher.
+- `src/i18n.ts`: UI text in English and Simplified Chinese. The language is picked from the browser on first visit and can be changed in Settings. Static text in `index.html` is tagged with `data-i18n` keys.
 - `src/main.ts`, `src/settings.ts`: DOM UI, input and persisted settings.

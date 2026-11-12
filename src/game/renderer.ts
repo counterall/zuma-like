@@ -1,8 +1,9 @@
 import { BALL_DIAMETER, BALL_RADIUS } from './chain';
-import { MUZZLE, SHOOTER_RADIUS, type Game } from './game';
+import { drawFrog, drawLilyPad, BACK_SLOT } from './frog';
+import { MUZZLE, type Game } from './game';
 import type { Level } from './level';
 import type { TrackPath } from './path';
-import { buildBallSprites, mix, rgba, type BallSprites } from './sprites';
+import { buildBallSprites, rgba, type BallSprites } from './sprites';
 import type { Theme } from './themes';
 
 export interface View {
@@ -309,71 +310,28 @@ export class Renderer {
 
   private drawShooter(ctx: CanvasRenderingContext2D, game: Game, base: () => void): void {
     const s = game.shooter;
-    const th = this.theme.shooter;
-    const R = SHOOTER_RADIUS;
     ctx.save();
     ctx.translate(s.x, s.y);
+    drawLilyPad(ctx, this.theme.shooter, rgba(this.theme.ui.accent2, 0.35));
+    drawFrog(ctx, { angle: s.angle, recoil: s.recoil, time: game.time });
+    ctx.restore();
 
-    // Soft halo.
-    const halo = ctx.createRadialGradient(0, 0, R * 0.8, 0, 0, R * 1.6);
-    halo.addColorStop(0, rgba(this.theme.ui.accent2, 0.35));
-    halo.addColorStop(1, rgba(this.theme.ui.accent2, 0));
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(0, 0, R * 1.6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Body.
-    const body = ctx.createRadialGradient(-R * 0.3, -R * 0.3, R * 0.1, 0, 0, R);
-    body.addColorStop(0, th.body[0]);
-    body.addColorStop(1, th.body[1]);
-    ctx.fillStyle = body;
-    ctx.beginPath();
-    ctx.arc(0, 0, R, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = th.ring;
-    ctx.lineWidth = 5;
-    ctx.stroke();
-
-    // Orbiting lights.
-    for (let i = 0; i < 10; i++) {
-      const a = game.time * 0.8 + (i * Math.PI) / 5;
-      ctx.fillStyle = i % 2 ? th.lights : th.ring;
-      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(game.time * 5 + i);
+    // Loaded marble in the frog's mouth, next marble riding on its back.
+    // A dark outline keeps green marbles readable against the green frog.
+    const outlined = (color: number, x: number, y: number, rot: number, scale: number): void => {
+      ctx.fillStyle = 'rgba(10, 30, 15, 0.7)';
       ctx.beginPath();
-      ctx.arc(Math.cos(a) * (R - 11), Math.sin(a) * (R - 11), 3.2, 0, Math.PI * 2);
+      ctx.arc(x, y, BALL_RADIUS * scale + 3, 0, Math.PI * 2);
       ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    // Barrel.
-    ctx.rotate(s.angle);
-    const back = -s.recoil * 8;
-    ctx.fillStyle = th.barrel;
-    ctx.strokeStyle = th.ring;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.roundRect(back + 4, -BALL_RADIUS - 5, MUZZLE + 8, (BALL_RADIUS + 5) * 2, 12);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-
-    // Loaded ball at the muzzle, next ball in the hub.
+      this.drawBall(ctx, color, x, y, rot, scale);
+    };
     const ease = 1 - Math.pow(1 - s.load, 3);
-    const mx = s.x + Math.cos(s.angle) * (MUZZLE - s.recoil * 8);
-    const my = s.y + Math.sin(s.angle) * (MUZZLE - s.recoil * 8);
+    const reach = MUZZLE - s.recoil * 8;
     if (game.state === 'playing' || game.state === 'paused' || game.state === 'title') {
-      this.drawBall(ctx, s.current, mx, my, s.angle, 0.4 + 0.6 * ease);
+      outlined(s.current, s.x + Math.cos(s.angle) * reach, s.y + Math.sin(s.angle) * reach, s.angle, 0.4 + 0.6 * ease);
     }
-    const nx = s.x - Math.cos(s.angle) * 12;
-    const ny = s.y - Math.sin(s.angle) * 12;
-    ctx.save();
-    ctx.fillStyle = mix(th.body[1], '#000000', 0.4);
-    ctx.beginPath();
-    ctx.arc(nx, ny, BALL_RADIUS * 0.68, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-    this.drawBall(ctx, s.next, nx, ny, 0, 0.52);
+    const back = BACK_SLOT - s.recoil * 6;
+    outlined(s.next, s.x + Math.cos(s.angle) * back, s.y + Math.sin(s.angle) * back, 0, 0.6);
     base();
   }
 
@@ -435,7 +393,7 @@ export class Renderer {
       const pop = Math.min(1, f.life / 0.12);
       ctx.globalAlpha = p > 0.7 ? (1 - p) / 0.3 : 1;
       const size = f.size * (0.6 + 0.4 * pop);
-      ctx.font = `900 ${size}px "Baloo 2", "Trebuchet MS", system-ui, sans-serif`;
+      ctx.font = `900 ${size}px "Baloo 2", "Trebuchet MS", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif`;
       const color = f.color === 'accent' ? this.theme.ui.accent : colorOf(f.color);
       ctx.lineWidth = size * 0.16;
       ctx.strokeStyle = 'rgba(0,0,0,0.65)';
