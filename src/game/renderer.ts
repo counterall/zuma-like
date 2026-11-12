@@ -424,16 +424,6 @@ export class Renderer {
           ctx.fill();
           ctx.stroke();
           break;
-        case 'shard': {
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 3;
-          const a = Math.atan2(p.vy, p.vx);
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x - Math.cos(a) * size * 2.5, p.y - Math.sin(a) * size * 2.5);
-          ctx.stroke();
-          break;
-        }
       }
     }
     ctx.globalCompositeOperation = 'source-over';

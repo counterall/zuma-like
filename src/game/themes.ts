@@ -1,6 +1,6 @@
-export type ThemeId = 'cosmic' | 'reef' | 'neon';
-export type BallStyle = 'glossy' | 'pearl' | 'neon';
-export type ParticleStyle = 'star' | 'bubble' | 'shard';
+export type ThemeId = 'cosmic' | 'reef';
+export type BallStyle = 'glossy' | 'pearl';
+export type ParticleStyle = 'star' | 'bubble';
 
 export interface Theme {
   id: ThemeId;
@@ -152,15 +152,16 @@ const reef: Theme = {
   balls: ['#ff5a3c', '#ffd93b', '#1fe39a', '#ff4fc3', '#3d7bff'],
   ballStyle: 'pearl',
   particle: 'bubble',
+  // A deep-water channel with a sandy rim: dark enough that every marble colour pops against it.
   track: {
-    edge: '#a8743a',
-    edgeWidth: 58,
-    fill: '#f5d99c',
+    edge: '#f2c97d',
+    edgeWidth: 60,
+    fill: '#0b3048',
     fillWidth: 48,
-    center: 'rgba(190, 140, 70, 0.35)',
-    glow: 'rgba(0, 40, 80, 0.45)',
-    glowBlur: 14,
-    pebbles: ['#e9c27d', '#fff1cc', '#d9a35f', '#ffb3a0'],
+    center: 'rgba(127, 243, 255, 0.3)',
+    glow: 'rgba(0, 30, 60, 0.55)',
+    glowBlur: 16,
+    pebbles: ['#145a78', '#1d6f8f', '#0f4762', '#2a8aa8'],
   },
   shooter: { body: ['#fff4fb', '#ff7fb4'], ring: '#ffd93b', lights: '#1fe39a', barrel: '#b8346f' },
   hole: { core: '#021a3a', arms: ['#7ff3ff', '#ffffff', '#3d7bff'] },
@@ -239,91 +240,5 @@ const reef: Theme = {
   },
 };
 
-// ---------------------------------------------------------------- Neon
-
-const neon: Theme = {
-  id: 'neon',
-  name: 'Neon',
-  tagline: 'Synthwave grid, laser glow & arcade lights',
-  balls: ['#ff2bd6', '#00f0ff', '#faff00', '#39ff14', '#ff7a00'],
-  ballStyle: 'neon',
-  particle: 'shard',
-  track: {
-    edge: '#00f0ff',
-    edgeWidth: 52,
-    fill: '#0d0018',
-    fillWidth: 46,
-    center: 'rgba(255, 43, 214, 0.55)',
-    glow: 'rgba(0, 240, 255, 1)',
-    glowBlur: 24,
-  },
-  shooter: { body: ['#3a0a5c', '#0d0018'], ring: '#ff2bd6', lights: '#faff00', barrel: '#00f0ff' },
-  hole: { core: '#0d0018', arms: ['#ff2bd6', '#00f0ff', '#faff00'] },
-  portal: ['#39ff14', '#00f0ff', '#ffffff'],
-  ui: { accent: '#ff2bd6', accent2: '#00f0ff', text: '#ffffff', panel: 'rgba(20, 0, 40, 0.94)' },
-  audio: { wave: 'square', cutoff: 3200 },
-  drawStatic(ctx, w, h) {
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, '#0a0018');
-    g.addColorStop(0.5, '#2a0048');
-    g.addColorStop(0.62, '#4a0a5e');
-    g.addColorStop(1, '#0a0018');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-    // Striped synth sun on the horizon.
-    const cx = w / 2;
-    const cy = h * 0.6;
-    const r = Math.min(w, h) * 0.32;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, Math.PI, 0);
-    ctx.clip();
-    const sun = ctx.createLinearGradient(0, cy - r, 0, cy);
-    sun.addColorStop(0, '#ffe600');
-    sun.addColorStop(0.5, '#ff7a00');
-    sun.addColorStop(1, '#ff2bd6');
-    ctx.fillStyle = sun;
-    ctx.globalAlpha = 0.55;
-    ctx.fillRect(cx - r, cy - r, r * 2, r);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#2a0048';
-    for (let i = 0; i < 6; i++) {
-      const y = cy - r * 0.45 + i * r * 0.09;
-      ctx.fillRect(cx - r, y, r * 2, r * 0.02 + i * r * 0.008);
-    }
-    ctx.restore();
-  },
-  drawAnimated(ctx, w, h, t) {
-    const horizon = h * 0.6;
-    ctx.strokeStyle = 'rgba(255, 43, 214, 0.55)';
-    ctx.lineWidth = Math.max(1, Math.min(w, h) / 500);
-    ctx.beginPath();
-    // Vertical lines fanning out from the vanishing point.
-    for (let i = -12; i <= 12; i++) {
-      ctx.moveTo(w / 2 + i * w * 0.02, horizon);
-      ctx.lineTo(w / 2 + i * w * 0.22, h);
-    }
-    // Horizontal lines scrolling towards the viewer.
-    const phase = (t * 0.35) % 1;
-    for (let i = 0; i < 12; i++) {
-      const z = (i + phase) / 12;
-      const y = horizon + (h - horizon) * z * z;
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-    }
-    ctx.stroke();
-    // A faint grid on the sky as well, mirrored.
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
-    ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-      const z = (i + phase) / 8;
-      const y = horizon - horizon * z * z;
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-    }
-    ctx.stroke();
-  },
-};
-
-export const THEMES: Record<ThemeId, Theme> = { cosmic, reef, neon };
-export const THEME_ORDER: ThemeId[] = ['cosmic', 'reef', 'neon'];
+export const THEMES: Record<ThemeId, Theme> = { cosmic, reef };
+export const THEME_ORDER: ThemeId[] = ['cosmic', 'reef'];
