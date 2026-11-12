@@ -1,7 +1,7 @@
 import { BALL_DIAMETER, BALL_RADIUS } from './chain';
 import { drawFrog, drawLilyPad, BACK_SLOT } from './frog';
 import { MUZZLE, type Game } from './game';
-import type { Level } from './level';
+import { fitBoard, type Level } from './level';
 import type { TrackPath } from './path';
 import { buildBallSprites, rgba, type BallSprites } from './sprites';
 import type { Theme } from './themes';
@@ -55,15 +55,13 @@ export class Renderer {
     this.rebuild();
   }
 
-  /** Scale the board to fill the screen. Portrait boards leave room for the HUD above them. */
+  /** Scale the board to fill the screen (see fitBoard). */
   private fitBoard(): void {
     const v = this.view;
-    const W = this.level?.width ?? 1000;
-    const H = this.level?.height ?? 1000;
-    const top = this.level?.layout === 'tall' ? Math.min(72, v.height * 0.09) : 0;
-    v.scale = Math.min(v.width / W, (v.height - top) / H) * 0.995;
-    v.ox = (v.width - W * v.scale) / 2;
-    v.oy = top + (v.height - top - H * v.scale) / 2;
+    const fit = fitBoard(this.level ?? { layout: 'wide', width: 1000, height: 1000 }, v.width, v.height);
+    v.scale = fit.scale;
+    v.ox = fit.ox;
+    v.oy = fit.oy;
   }
 
   /** CSS pixel → world coordinate. */

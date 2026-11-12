@@ -22,7 +22,7 @@ pnpm build       # type-check + production build into dist/
 
 - `src/game/chain.ts`: chain simulation (spawning, pushing, insertion, matching, gap retraction and combos). Has no rendering, so it's unit-tested.
 - `src/game/path.ts`: arc-length-parameterised track and the spiral generator.
-- `src/game/level.ts`: level definition (track shape, ball count, colours, speeds) in three board layouts, picked from the screen shape when a game starts: `wide` (desktop and landscape tablets, the main target), `tall` (portrait screens) and `compact` (landscape phones).
+- `src/game/level.ts`: level definition (track shape, ball count, colours, speeds) in three board layouts, picked from the screen shape when a game starts: `wide` (desktop and landscape tablets, the main target), `tall` (portrait screens) and `compact` (landscape phones). The `wide` board is 600 units tall and its width follows the screen's aspect ratio (4:3 to 2:1), so the track fills the screen and marbles render large; its marble count scales with the track length.
 - `src/game/game.ts`: game state, shooter, projectiles, effects and scoring.
 - `src/game/renderer.ts`, `sprites.ts`: canvas rendering with cached background, track and ball sprites.
 - `src/game/themes.ts`: the Cosmic and Reef themes (palettes, backgrounds, track styles, particles, sound timbre).

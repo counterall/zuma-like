@@ -1,6 +1,6 @@
 import { Sfx } from './audio';
 import { BALL_DIAMETER, BALL_RADIUS, Chain, type Ball, type ChainEvent } from './chain';
-import { createLevel1, type LayoutId, type Level } from './level';
+import type { Level } from './level';
 import { t } from '../i18n';
 
 export type GameState = 'title' | 'playing' | 'paused' | 'losing' | 'lost' | 'won';
@@ -88,15 +88,15 @@ export class Game {
 
   constructor(
     private readonly cb: GameCallbacks,
-    /** Returns the board layout that suits the current screen; read whenever a game is set up. */
-    private readonly chooseLayout: () => LayoutId,
+    /** Builds the board that suits the current screen; called whenever a game is set up. */
+    private readonly makeLevel: () => Level,
   ) {
     this.reset();
   }
 
   /** Build a fresh board, using the layout that fits the screen right now. */
   reset(): void {
-    this.level = createLevel1(this.chooseLayout());
+    this.level = this.makeLevel();
     this.chain = new Chain(this.level.path, this.level.config);
     this.shooter = {
       x: this.level.shooter.x,
