@@ -97,6 +97,26 @@ describe.each(BIG_SCREENS)('%i×%i screen', (w, h) => {
   });
 });
 
+/** HUD boxes in CSS pixels (see #hud in style.css): score + meter top-left, two buttons top-right. */
+const HUD_SCORE = { w: 210, h: 90 };
+const HUD_BUTTONS = { w: 120, h: 64 };
+
+describe.each(BIG_SCREENS)('%i×%i screen HUD', (w, h) => {
+  it('never hides the track under the score or the buttons', () => {
+    const level = levelForScreen(w, h);
+    const { scale, ox, oy } = fitBoard(level, w, h);
+    const r = TRACK_HALF * scale;
+    for (let s = 0; s < level.path.length; s += 6) {
+      const p = level.path.pointAt(s);
+      const x = ox + p.x * scale;
+      const y = oy + p.y * scale;
+      const underScore = x - r < HUD_SCORE.w && y - r < HUD_SCORE.h;
+      const underButtons = x + r > w - HUD_BUTTONS.w && y - r < HUD_BUTTONS.h;
+      expect(underScore || underButtons, `track at (${x.toFixed(0)}, ${y.toFixed(0)})`).toBe(false);
+    }
+  });
+});
+
 describe('fitBoard', () => {
   it('centres the board and keeps it on screen', () => {
     const level = createLevel1('wide', 16 / 9);

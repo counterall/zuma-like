@@ -267,10 +267,10 @@ window.addEventListener('blur', () => game.pause());
 function resize(): void {
   const w = window.innerWidth;
   const h = window.innerHeight;
-  // Outside of a running game, switch to the board that fits the new screen shape.
-  // A game in progress keeps its board (scaled to fit) until the next restart.
-  const idle = game.state === 'title' || game.state === 'won' || game.state === 'lost';
-  if (idle && !sameBoard(game.level, w, h)) game.reset();
+  // On the title screen, switch to the board that fits the new screen shape. Anywhere else
+  // the board stays (scaled to fit): a game in progress keeps it, and after a game ends
+  // resetting would wipe the score the result screen shows. "Play again" builds a fresh board.
+  if (game.state === 'title' && !sameBoard(game.level, w, h)) game.reset();
   renderer.setLevel(game.level);
   renderer.resize(w, h, window.devicePixelRatio || 1);
   phoneNote.hidden = Math.min(w, h) >= 600;
