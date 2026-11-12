@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#120540" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Chroma Coil</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='.35' cy='.35'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.5' stop-color='%23ff3d9a'/%3E%3Cstop offset='1' stop-color='%23701a6e'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='14' fill='url(%23g)'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game" aria-label="Chroma Coil game board"></canvas>
+
+      <div id="hud" hidden>
+        <div class="hud-left">
+          <div class="score-label">Score</div>
+          <div class="score" id="score">0</div>
+          <div class="meter" aria-label="Level progress"><div class="meter-fill" id="meter-fill"></div></div>
+        </div>
+        <div class="hud-right">
+          <button id="btn-pause" class="icon-btn" aria-label="Pause">
+            <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" /><rect x="14" y="5" width="4" height="14" rx="1.5" /></svg>
+          </button>
+          <button class="icon-btn" data-open-settings aria-label="Settings">
+            <svg viewBox="0 0 24 24" class="stroke"><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2.2" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <section id="screen-title" class="screen">
+        <div class="card">
+          <h1 class="logo"><span class="l1">Chroma</span><span class="l2">Coil</span></h1>
+          <p class="tag">Shoot marbles into the rolling chain. Match 3 or more of a colour to pop them before they reach the vortex!</p>
+          <button id="btn-play" class="btn primary">Play</button>
+          <button class="btn ghost" data-open-settings>Settings</button>
+          <p class="hint controls-hint"></p>
+        </div>
+      </section>
+
+      <section id="screen-pause" class="screen" hidden>
+        <div class="card">
+          <h2>Paused</h2>
+          <button id="btn-resume" class="btn primary">Resume</button>
+          <button class="btn ghost" data-restart>Restart</button>
+          <button class="btn ghost" data-open-settings>Settings</button>
+          <p class="hint controls-hint"></p>
+        </div>
+      </section>
+
+      <section id="screen-result" class="screen" hidden>
+        <div class="card">
+          <h2 id="result-title">Cleared!</h2>
+          <p class="result-score"><span id="result-score">0</span><small>points</small></p>
+          <p class="best" id="result-best"></p>
+          <button class="btn primary" data-restart>Play again</button>
+          <button class="btn ghost" data-open-settings>Settings</button>
+        </div>
+      </section>
+
+      <section id="screen-settings" class="screen" hidden>
+        <div class="card wide">
+          <h2>Settings</h2>
+          <h3>Theme</h3>
+          <div class="themes" id="theme-list" role="radiogroup" aria-label="Theme"></div>
+          <div class="toggles">
+            <label class="toggle"><input type="checkbox" id="opt-sound" /><span class="switch"></span>Sound effects</label>
+            <label class="toggle"><input type="checkbox" id="opt-aim" /><span class="switch"></span>Aim guide</label>
+          </div>
+          <button id="btn-settings-done" class="btn primary">Done</button>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
