@@ -30,10 +30,13 @@ body {
 }
 
 #app {
-  position: fixed;
+  /* Not position: fixed. iOS home-screen apps can report a window shorter than the screen; a fixed
+     #app taller than that window was cut off at its bottom (issue #11). The page itself is sized
+     to the screen instead (sizePage in viewport.ts). */
+  position: absolute;
   top: 0;
   left: 0;
-  /* main.ts sets the exact size in px (see viewport.ts); this is the fallback. */
+  /* main.ts sets the exact size in px on html, body and #app (see viewport.ts); this is the fallback. */
   width: 100%;
   height: 100%;
 }

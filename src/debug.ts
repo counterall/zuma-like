@@ -30,6 +30,7 @@ export function showViewportDebug(): () => void {
       `inner        ${innerWidth} x ${innerHeight}`,
       `visualVP     ${vv ? `${Math.round(vv.width)} x ${Math.round(vv.height)} @ ${Math.round(vv.offsetLeft)},${Math.round(vv.offsetTop)} x${vv.scale.toFixed(2)}` : 'n/a'}`,
       `docElement   ${document.documentElement.clientWidth} x ${document.documentElement.clientHeight}`,
+      `page         html ${Math.round(document.documentElement.getBoundingClientRect().height)}  body ${Math.round(document.body.getBoundingClientRect().height)}  scrollH ${document.documentElement.scrollHeight}`,
       `screen       ${screen.width} x ${screen.height}  dpr ${devicePixelRatio}`,
       `#app         ${Math.round(app.width)} x ${Math.round(app.height)} @ ${Math.round(app.left)},${Math.round(app.top)}`,
       `game size    ${fit.width} x ${fit.height}`,

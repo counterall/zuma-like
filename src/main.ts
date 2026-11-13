@@ -6,7 +6,7 @@ import { previewBackground, THEME_ORDER, THEMES, type ThemeId } from './game/the
 import { loadSettings, saveSettings } from './settings';
 import { LANG_NAMES, LANGS, setLang, t, translateDom, type Lang } from './i18n';
 import { debugFromUrl, loadDebug, saveDebug, tapCounter } from './debugFlag';
-import { isIosWebApp, readViewport, readWebAppEnv, screenSize } from './viewport';
+import { isIosWebApp, readViewport, readWebAppEnv, screenSize, sizePage } from './viewport';
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector<T>(sel)!;
 const $$ = (sel: string): HTMLElement[] => [...document.querySelectorAll<HTMLElement>(sel)];
@@ -286,12 +286,19 @@ function measureHud(): void {
 
 const app = $('#app');
 
+/** iOS can leave the page scrolled after rotation or a viewport change; then taps land offset. */
+function resetScroll(): void {
+  // Leave pinch-zoom panning alone (iOS allows zoom despite user-scalable=no).
+  if ((window.visualViewport?.scale ?? 1) > 1.01) return;
+  if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+}
+// The page can be taller than the window iOS reports (see resize), so never let it stay scrolled.
+window.addEventListener('scroll', resetScroll, { passive: true });
+
 function resize(): void {
   const { width: w, height: h } = screenSize(readViewport());
-  app.style.width = `${w}px`;
-  app.style.height = `${h}px`;
-  // iOS can leave the page scrolled after rotation or a viewport change; then taps land offset.
-  if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+  sizePage({ html: document.documentElement, body: document.body, app }, w, h);
+  resetScroll();
   // On the title screen, switch to the board that fits the new screen shape. Anywhere else
   // the board stays (scaled to fit): a game in progress keeps it, and after a game ends
   // resetting would wipe the score the result screen shows. "Play again" builds a fresh board.
