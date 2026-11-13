@@ -4,6 +4,9 @@
  * iOS home-screen apps (black-translucent status bar, viewport-fit=cover) sometimes report a
  * viewport one status bar shorter than the screen, which left an empty band at the bottom
  * (issue #9). When that happens we size the game to the real screen instead.
+ *
+ * Apps added from a page with a web manifest may open as a "web app" where navigator.standalone
+ * is false, so the display-mode media query counts too (issue #11; not yet confirmed on a device).
  */
 
 export interface ViewportInfo {
@@ -12,7 +15,7 @@ export interface ViewportInfo {
   /** iOS reports these in portrait terms whatever the orientation. */
   screenWidth: number;
   screenHeight: number;
-  /** Running as an iOS home-screen app (navigator.standalone). */
+  /** Running as an iOS home-screen app (see isIosWebApp). */
   iosStandalone: boolean;
 }
 
@@ -37,12 +40,43 @@ export function screenSize(v: ViewportInfo): { width: number; height: number } {
   return { width, height };
 }
 
+export interface WebAppEnv {
+  userAgent: string;
+  maxTouchPoints: number;
+  /** navigator.standalone, the older iOS home-screen flag. */
+  standalone: boolean;
+  /** The matching CSS display-mode: 'browser', 'standalone', 'fullscreen' or 'minimal-ui'. */
+  displayMode: string;
+}
+
+/** iPhone/iPod, or an iPad (which reports a Mac user agent but has touch). */
+function isIos(env: WebAppEnv): boolean {
+  return /iPhone|iPad|iPod/.test(env.userAgent) || (/Macintosh/.test(env.userAgent) && env.maxTouchPoints > 1);
+}
+
+/** Running as an app added to the iOS home screen, however iOS launched it. */
+export function isIosWebApp(env: WebAppEnv): boolean {
+  return isIos(env) && (env.standalone || env.displayMode !== 'browser');
+}
+
+const DISPLAY_MODES = ['fullscreen', 'standalone', 'minimal-ui'];
+
+export function readWebAppEnv(): WebAppEnv {
+  const match = (mode: string) => typeof matchMedia === 'function' && matchMedia(`(display-mode: ${mode})`).matches;
+  return {
+    userAgent: navigator.userAgent,
+    maxTouchPoints: navigator.maxTouchPoints ?? 0,
+    standalone: (navigator as Navigator & { standalone?: boolean }).standalone === true,
+    displayMode: DISPLAY_MODES.find(match) ?? 'browser',
+  };
+}
+
 export function readViewport(): ViewportInfo {
   return {
     innerWidth: window.innerWidth,
     innerHeight: window.innerHeight,
     screenWidth: screen.width,
     screenHeight: screen.height,
-    iosStandalone: (navigator as Navigator & { standalone?: boolean }).standalone === true,
+    iosStandalone: isIosWebApp(readWebAppEnv()),
   };
 }

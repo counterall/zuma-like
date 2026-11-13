@@ -5,7 +5,8 @@ import { Renderer } from './game/renderer';
 import { previewBackground, THEME_ORDER, THEMES, type ThemeId } from './game/themes';
 import { loadSettings, saveSettings } from './settings';
 import { LANG_NAMES, LANGS, setLang, t, translateDom, type Lang } from './i18n';
-import { readViewport, screenSize } from './viewport';
+import { debugFromUrl, loadDebug, saveDebug, tapCounter } from './debugFlag';
+import { isIosWebApp, readViewport, readWebAppEnv, screenSize } from './viewport';
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector<T>(sel)!;
 const $$ = (sel: string): HTMLElement[] => [...document.querySelectorAll<HTMLElement>(sel)];
@@ -318,7 +319,34 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) scheduleResize();
 });
 resize();
-if (new URLSearchParams(location.search).get('debug') === 'viewport') void import('./debug').then((m) => m.showViewportDebug());
+// Viewport diagnostics: ?debug=viewport, or tap the Settings title 5 times (see debugFlag.ts).
+let debugOn = false;
+let hideDebug: (() => void) | null = null;
+let debugModule: Promise<typeof import('./debug')> | null = null;
+function setDebug(on: boolean): void {
+  saveDebug(on);
+  debugOn = on;
+  if (!on) {
+    hideDebug?.();
+    hideDebug = null;
+    return;
+  }
+  debugModule ??= import('./debug');
+  void debugModule.then((m) => {
+    // Still wanted once loaded, and not already showing (taps can race the import).
+    if (debugOn && !hideDebug) hideDebug = m.showViewportDebug();
+  });
+}
+const debugUrl = debugFromUrl(location.search);
+if (debugUrl !== undefined) setDebug(debugUrl);
+else if (loadDebug()) setDebug(true);
+// Only where the URL can't be changed: in a browser tab, ?debug=viewport is enough.
+if (isIosWebApp(readWebAppEnv())) {
+  const debugTap = tapCounter(5, 3000);
+  $('#screen-settings h2').addEventListener('pointerdown', (e) => {
+    if (debugTap(e.timeStamp)) setDebug(!debugOn);
+  });
+}
 // The HUD's height can change once its web font arrives.
 void document.fonts?.ready.then(measureHud);
 

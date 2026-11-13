@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { screenSize, type ViewportInfo } from './viewport';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { isIosWebApp, readViewport, readWebAppEnv, screenSize, type ViewportInfo, type WebAppEnv } from './viewport';
 
 // iPhone 16 Pro: 402×874 CSS px screen, the device in the issue screenshot.
 const iphone = (over: Partial<ViewportInfo>): ViewportInfo => ({
@@ -54,3 +54,58 @@ describe('screenSize (issue #9: fill the whole iPhone screen)', () => {
   });
 });
 
+
+describe('isIosWebApp (issue #11: detect home-screen apps launched from the manifest)', () => {
+  const iphoneUa = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1';
+  const ipadUa = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15';
+  const androidUa = 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Mobile Safari/537.36';
+  const env = (over: Partial<WebAppEnv>): WebAppEnv => ({ userAgent: iphoneUa, maxTouchPoints: 5, standalone: false, displayMode: 'browser', ...over });
+
+  it('is true for the legacy navigator.standalone flag', () => {
+    expect(isIosWebApp(env({ standalone: true }))).toBe(true);
+  });
+
+  it('is true when iOS opens the manifest web app (display-mode standalone/fullscreen) without navigator.standalone', () => {
+    expect(isIosWebApp(env({ displayMode: 'standalone' }))).toBe(true);
+    expect(isIosWebApp(env({ displayMode: 'fullscreen' }))).toBe(true);
+    expect(isIosWebApp(env({ displayMode: 'minimal-ui' }))).toBe(true);
+  });
+
+  it('is true for iPads, which report a Mac user agent', () => {
+    expect(isIosWebApp(env({ userAgent: ipadUa, displayMode: 'standalone' }))).toBe(true);
+  });
+
+  it('is false in a Safari tab', () => {
+    expect(isIosWebApp(env({}))).toBe(false);
+  });
+
+  it('is false for installed apps elsewhere, where the viewport is already right (Android, desktop Mac)', () => {
+    expect(isIosWebApp(env({ userAgent: androidUa, displayMode: 'standalone' }))).toBe(false);
+    expect(isIosWebApp(env({ userAgent: ipadUa, maxTouchPoints: 0, displayMode: 'standalone' }))).toBe(false);
+  });
+});
+
+describe('readViewport (issue #11: wiring the detection into the game size)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const stub = (mode: string, standalone?: boolean) => {
+    vi.stubGlobal('window', { innerWidth: 402, innerHeight: 812 });
+    vi.stubGlobal('screen', { width: 402, height: 874 });
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X)', maxTouchPoints: 5, standalone });
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q === `(display-mode: ${mode})` }));
+  };
+
+  it('fills the screen for a manifest web app without navigator.standalone', () => {
+    stub('standalone');
+    expect(readWebAppEnv()).toMatchObject({ standalone: false, displayMode: 'standalone' });
+    expect(screenSize(readViewport())).toEqual({ width: 402, height: 874 });
+  });
+
+  it('prefers fullscreen when several display modes match, and leaves Safari tabs alone', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    vi.stubGlobal('navigator', { userAgent: 'iPhone', maxTouchPoints: 5 });
+    expect(readWebAppEnv().displayMode).toBe('fullscreen');
+    stub('browser');
+    expect(screenSize(readViewport())).toEqual({ width: 402, height: 812 });
+  });
+});
