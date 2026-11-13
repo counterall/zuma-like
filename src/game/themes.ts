@@ -17,7 +17,13 @@ export interface Theme {
     glow: string;
     glowBlur: number;
     pebbles?: string[];
+    /** Opacity the whole rail is composited at (default 1). Below 1 the ground shows through. */
+    opacity?: number;
   };
+  /** Main colours of the ground the track crosses; needed to check contrast on a see-through rail. */
+  ground?: string[];
+  /** Thin ring drawn around every chain marble, for themes whose rail alone can't separate marbles from the ground. */
+  ballOutline?: string;
   /** Lily pad under the frog launcher. */
   shooter: { light: string; dark: string; flower: string };
   hole: { core: string; arms: string[] };
@@ -142,22 +148,27 @@ const reefBubbles = (() => {
   }));
 })();
 
+const REEF_WATER = ['#11d3e0', '#0a8fc4', '#063a7a'];
+
 const reef: Theme = {
   id: 'reef',
   balls: ['#ff5a3c', '#ffd93b', '#1fe39a', '#ff4fc3', '#3d7bff'],
   ballStyle: 'pearl',
   particle: 'bubble',
-  // A deep-water channel with a sandy rim: dark enough that every marble colour pops against it.
+  // A see-through deep-water channel; pearly rims keep the marbles crisp where the water is darkest.
   track: {
-    edge: '#f2c97d',
-    edgeWidth: 60,
-    fill: '#0b3048',
+    edge: '#011022',
+    edgeWidth: 54,
+    fill: '#021a33',
     fillWidth: 48,
-    center: 'rgba(127, 243, 255, 0.3)',
-    glow: 'rgba(0, 30, 60, 0.55)',
-    glowBlur: 16,
-    pebbles: ['#145a78', '#1d6f8f', '#0f4762', '#2a8aa8'],
+    center: 'rgba(127, 243, 255, 0.35)',
+    glow: 'rgba(0, 0, 0, 0)',
+    glowBlur: 0,
+    pebbles: ['#0d4a6e', '#135a80', '#08324f', '#1b6a90'],
+    opacity: 0.5,
   },
+  ground: REEF_WATER,
+  ballOutline: '#e8fbff',
   shooter: { light: '#7be38a', dark: '#1b7a3c', flower: '#ff6fa8' },
   hole: { core: '#021a3a', arms: ['#7ff3ff', '#ffffff', '#3d7bff'] },
   portal: ['#ffd93b', '#ff5a3c', '#ffffff'],
@@ -165,9 +176,9 @@ const reef: Theme = {
   audio: { wave: 'triangle', cutoff: 2600 },
   drawStatic(ctx, w, h) {
     const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, '#11d3e0');
-    g.addColorStop(0.45, '#0a8fc4');
-    g.addColorStop(1, '#063a7a');
+    g.addColorStop(0, REEF_WATER[0]);
+    g.addColorStop(0.45, REEF_WATER[1]);
+    g.addColorStop(1, REEF_WATER[2]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
     // Seabed with colourful coral clumps.
@@ -328,23 +339,28 @@ const butterflies = [
   { color: '#7cc8ff', speed: 0.095, phase: 4.2, ax: 0.3, ay: 0.4 },
 ];
 
+const LAWN = ['#a6dc55', '#8fcf45', '#73bb37'];
+
 const classic: Theme = {
   id: 'classic',
   // Teal rather than grass green, so no marble matches the lawn.
   balls: ['#ff4d4d', '#ffd43b', '#4dabff', '#2fd8c0', '#c77dff'],
   ballStyle: 'glossy',
   particle: 'petal',
-  // A dark, worn dirt path with a sandy edge, so every marble pops against it.
+  // A see-through, mossy groove worn into the lawn; dark rims keep the marbles crisp against it.
   track: {
-    edge: '#d9ae6c',
-    edgeWidth: 58,
-    fill: '#4a321b',
+    edge: '#141f06',
+    edgeWidth: 54,
+    fill: '#24350a',
     fillWidth: 48,
-    center: 'rgba(255, 228, 170, 0.16)',
-    glow: 'rgba(40, 70, 10, 0.45)',
-    glowBlur: 12,
-    pebbles: ['#6b4a2a', '#7d5a36', '#35230f', '#8f6d45'],
+    center: 'rgba(220, 255, 170, 0.22)',
+    glow: 'rgba(0, 0, 0, 0)',
+    glowBlur: 0,
+    pebbles: ['#3a5212', '#4a661a', '#1a2806', '#56742a'],
+    opacity: 0.5,
   },
+  ground: LAWN,
+  ballOutline: '#08140a',
   shooter: { light: '#4cc38a', dark: '#17603a', flower: '#ff6fb5' },
   hole: { core: '#140c04', arms: ['#d9ae6c', '#8f6d45', '#fff3d1'] },
   portal: ['#ffd43b', '#2fd8c0', '#ffffff'],
@@ -354,9 +370,9 @@ const classic: Theme = {
     const unit = Math.min(w, h) / 600;
     // Sunny lawn with soft light and shade patches.
     const g = ctx.createLinearGradient(0, 0, w, h);
-    g.addColorStop(0, '#a6dc55');
-    g.addColorStop(0.5, '#8fcf45');
-    g.addColorStop(1, '#73bb37');
+    g.addColorStop(0, LAWN[0]);
+    g.addColorStop(0.5, LAWN[1]);
+    g.addColorStop(1, LAWN[2]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
     const m = Math.max(w, h);

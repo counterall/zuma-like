@@ -152,7 +152,10 @@ export class Renderer {
     const shakeY = game.shake ? (Math.random() - 0.5) * game.shake : 0;
     const k = v.scale * v.dpr;
     ctx.setTransform(1, 0, 0, 1, shakeX * k, shakeY * k);
+    // The rail is drawn opaque into its own layer and faded as one image, so overlapping strokes don't stack up.
+    ctx.globalAlpha = this.theme.track.opacity ?? 1;
     ctx.drawImage(this.trackLayer, 0, 0);
+    ctx.globalAlpha = 1;
 
     const base = (): void => ctx.setTransform(k, 0, 0, k, (v.ox + shakeX * v.scale) * v.dpr, (v.oy + shakeY * v.scale) * v.dpr);
     base();
@@ -191,9 +194,18 @@ export class Renderer {
       const grow = 0.55 + 0.45 * b.grow;
       const scale = Math.min(emerge, sink) * grow;
       if (scale <= 0.02) continue;
+      if (this.theme.ballOutline) this.drawRim(ctx, b.x, b.y, scale, this.theme.ballOutline);
       this.drawBall(ctx, b.color, b.x, b.y, b.angle + b.s / BALL_RADIUS, scale);
     }
     base();
+  }
+
+  /** A thin ring just outside a marble, in the theme's outline colour. */
+  private drawRim(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number, color: string): void {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, BALL_RADIUS * scale + 1.5, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   /** A marble with a dark outline, so it reads on any background (e.g. green on a green frog or lawn). */
