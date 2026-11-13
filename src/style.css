@@ -10,6 +10,9 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  /* iOS ignores user-scalable=no; without this a quick double tap zooms the page and later taps land
+     offset. Set on every element: touch-action isn't inherited and stops at scrollable overlays. */
+  touch-action: manipulation;
 }
 
 html,
@@ -28,7 +31,11 @@ body {
 
 #app {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  /* main.ts sets the exact size in px (see viewport.ts); this is the fallback. */
+  width: 100%;
+  height: 100%;
 }
 
 #game {

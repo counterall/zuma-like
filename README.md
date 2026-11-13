@@ -5,7 +5,7 @@ A vivid marble-shooter for desktop and mobile browsers, built with Vite and Type
 ```bash
 pnpm install
 pnpm dev         # dev server (also on your LAN, so you can test on a phone)
-pnpm test        # unit tests (chain logic, board layouts, theme contrast, on-screen labels, translations)
+pnpm test        # unit tests (chain logic, board layouts, theme contrast, on-screen labels, screen sizing, translations)
 pnpm build       # type-check + production build into dist/
 ```
 
@@ -31,3 +31,4 @@ pnpm build       # type-check + production build into dist/
 - `src/game/frog.ts`: the frog-on-a-lily-pad launcher.
 - `src/i18n.ts`: UI text in English and Simplified Chinese. The language is picked from the browser on first visit and can be changed in Settings. Static text in `index.html` is tagged with `data-i18n` keys.
 - `src/main.ts`, `src/settings.ts`: DOM UI, input and persisted settings.
+- `src/viewport.ts`: the size the game fills; works around iOS home-screen apps reporting a viewport one status bar short of the screen.
