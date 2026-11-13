@@ -1,6 +1,7 @@
 import { BALL_DIAMETER, BALL_RADIUS } from './chain';
 import { drawFrog, drawLilyPad, BACK_SLOT } from './frog';
 import { MUZZLE, type Game } from './game';
+import { fitLabel, visibleArea, type Insets } from './labels';
 import { fitBoard, type Level } from './level';
 import type { TrackPath } from './path';
 import { buildBallSprites, rgba, type BallSprites } from './sprites';
@@ -21,6 +22,8 @@ export class Renderer {
   readonly ctx: CanvasRenderingContext2D;
   view: View = { width: 1, height: 1, dpr: 1, scale: 1, ox: 0, oy: 0 };
   showAimGuide = true;
+  /** Screen areas floating text must keep clear of (set from the page's HUD). */
+  labelInsets: Insets = { margin: 8 };
   private theme!: Theme;
   private sprites!: BallSprites;
   private bgLayer = document.createElement('canvas');
@@ -419,18 +422,28 @@ export class Renderer {
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    const v = this.view;
+    // No screen shake for text: it is fitted to the screen edge, and shake could nudge it past.
+    ctx.setTransform(v.scale * v.dpr, 0, 0, v.scale * v.dpr, v.ox * v.dpr, v.oy * v.dpr);
+    const area = visibleArea(v, v.width, v.height, this.labelInsets);
+    const font = (size: number) =>
+      `900 ${size}px "Baloo 2", "Trebuchet MS", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif`;
     for (const f of game.floaters) {
       const p = f.life / f.max;
       const pop = Math.min(1, f.life / 0.12);
       ctx.globalAlpha = p > 0.7 ? (1 - p) / 0.3 : 1;
-      const size = f.size * (0.6 + 0.4 * pop);
-      ctx.font = `900 ${size}px "Baloo 2", "Trebuchet MS", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif`;
+      // Fit the label at its full size, so it doesn't drift while it pops in.
+      ctx.font = font(f.size);
+      const outline = f.size * 0.16;
+      const fit = fitLabel(f.x, f.y, ctx.measureText(f.text).width + outline, f.size * 1.1 + outline, area);
+      const size = f.size * fit.scale * (0.6 + 0.4 * pop);
+      ctx.font = font(size);
       const color = f.color === 'accent' ? this.theme.ui.accent : colorOf(f.color);
       ctx.lineWidth = size * 0.16;
       ctx.strokeStyle = 'rgba(0,0,0,0.65)';
-      ctx.strokeText(f.text, f.x, f.y);
+      ctx.strokeText(f.text, fit.x, fit.y);
       ctx.fillStyle = color;
-      ctx.fillText(f.text, f.x, f.y);
+      ctx.fillText(f.text, fit.x, fit.y);
     }
     ctx.globalAlpha = 1;
   }

@@ -5,7 +5,7 @@ A vivid marble-shooter for desktop and mobile browsers, built with Vite and Type
 ```bash
 pnpm install
 pnpm dev         # dev server (also on your LAN, so you can test on a phone)
-pnpm test        # unit tests (chain logic, board layouts, theme contrast, translations)
+pnpm test        # unit tests (chain logic, board layouts, theme contrast, on-screen labels, translations)
 pnpm build       # type-check + production build into dist/
 ```
 
@@ -25,6 +25,7 @@ pnpm build       # type-check + production build into dist/
 - `src/game/level.ts`: level definition (track shape, ball count, colours, speeds) in three board layouts, picked from the screen shape when a game starts: `wide` (desktop and landscape tablets, the main target), `tall` (portrait screens) and `compact` (landscape phones). The `wide` board is 600 units tall and its width follows the screen's aspect ratio (4:3 to 2:1), so the track fills the screen and marbles render large; its marble count scales with the track length.
 - `src/game/game.ts`: game state, shooter, projectiles, effects and scoring.
 - `src/game/renderer.ts`, `sprites.ts`: canvas rendering with cached background, track and ball sprites.
+- `src/game/labels.ts`: keeps floating text (combos, points) entirely on screen and clear of the HUD, shrinking it if needed.
 - `src/game/themes.ts`: the Cosmic, Reef and Classic themes (palettes, backgrounds, track styles, particles, sound timbre). Backgrounds are drawn in code; there are no image assets. Reef and Classic draw a see-through rail (the ground shows through) and rim each marble so it stays readable; the contrast test checks marbles against the rail blended over the ground.
 - `src/game/audio.ts`: synthesised sound effects (no audio files).
 - `src/game/frog.ts`: the frog-on-a-lily-pad launcher.
