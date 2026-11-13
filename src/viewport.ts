@@ -1,12 +1,11 @@
 /**
  * The size the game should fill.
  *
- * iOS home-screen apps (black-translucent status bar, viewport-fit=cover) sometimes report a
- * viewport one status bar shorter than the screen, which left an empty band at the bottom
- * (issue #9). When that happens we size the game to the real screen instead.
- *
- * Apps added from a page with a web manifest may open as a "web app" where navigator.standalone
- * is false, so the display-mode media query counts too (issue #11; not yet confirmed on a device).
+ * iOS home-screen apps (black-translucent status bar, viewport-fit=cover) can report a viewport
+ * one status bar shorter than the screen, which left an empty band at the bottom (issues #9, #11).
+ * When that happens we size the game to the real screen instead, and sizePage applies that size to
+ * the page itself, not only to the game element: on an iPhone the band stayed while only #app was
+ * 874 px tall (a fixed layer inside a 812 px document).
  */
 
 export interface ViewportInfo {
@@ -79,4 +78,20 @@ export function readViewport(): ViewportInfo {
     screenHeight: screen.height,
     iosStandalone: isIosWebApp(readWebAppEnv()),
   };
+}
+
+interface Sizable {
+  style: { width: string; height: string; position?: string };
+}
+
+/**
+ * Size the page (html, body) and the game element alike, so nothing taller sits in a shorter
+ * document. #app is positioned absolutely inside the page, never as a fixed layer.
+ */
+export function sizePage(els: { html: Sizable; body: Sizable; app: Sizable }, width: number, height: number): void {
+  els.app.style.position = 'absolute';
+  for (const el of [els.html, els.body, els.app]) {
+    el.style.width = `${width}px`;
+    el.style.height = `${height}px`;
+  }
 }
