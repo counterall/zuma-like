@@ -423,6 +423,8 @@ export class Renderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const v = this.view;
+    // No screen shake for text: it is fitted to the screen edge, and shake could nudge it past.
+    ctx.setTransform(v.scale * v.dpr, 0, 0, v.scale * v.dpr, v.ox * v.dpr, v.oy * v.dpr);
     const area = visibleArea(v, v.width, v.height, this.labelInsets);
     const font = (size: number) =>
       `900 ${size}px "Baloo 2", "Trebuchet MS", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif`;

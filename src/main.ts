@@ -122,6 +122,7 @@ function applyLang(lang: Lang): void {
   for (const el of $$('.controls-hint')) el.textContent = t(coarse ? 'hint.touch' : 'hint.mouse');
   for (const btn of $$('.lang-btn')) btn.setAttribute('aria-checked', String(btn.dataset.lang === lang));
   renderResult();
+  measureHud();
 }
 
 function buildLangButtons(): void {
@@ -293,6 +294,8 @@ function resize(): void {
 const phoneNote = $('#phone-note');
 window.addEventListener('resize', resize);
 resize();
+// The HUD's height can change once its web font arrives.
+void document.fonts?.ready.then(measureHud);
 
 let last = performance.now();
 function frame(now: number): void {

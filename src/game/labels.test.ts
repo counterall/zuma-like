@@ -27,6 +27,10 @@ describe('fitLabel (issue #7: combo text stays fully on screen)', () => {
     inside(l, 180, 50, area);
   });
 
+  it('never returns a negative size, even when the HUD leaves no room', () => {
+    expect(fitLabel(200, 400, 100, 40, { left: 0, top: 500, right: 400, bottom: 480 }).scale).toBe(0);
+  });
+
   it('shrinks a label wider than the screen so it fits whole', () => {
     const l = fitLabel(200, 400, 600, 50, area);
     expect(l.scale).toBeCloseTo(400 / 600);

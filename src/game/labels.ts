@@ -36,7 +36,7 @@ export function visibleArea(fit: BoardFit, vw: number, vh: number, insets: Inset
  * and how much to shrink it (scale ≤ 1) when it is bigger than the area itself.
  */
 export function fitLabel(x: number, y: number, width: number, height: number, area: Area): { x: number; y: number; scale: number } {
-  const scale = Math.min(1, (area.right - area.left) / width, (area.bottom - area.top) / height);
+  const scale = Math.max(0, Math.min(1, (area.right - area.left) / width, (area.bottom - area.top) / height));
   const hw = (width * scale) / 2;
   const hh = (height * scale) / 2;
   const clamp = (v: number, lo: number, hi: number) => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v)));
