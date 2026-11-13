@@ -31,4 +31,4 @@ pnpm build       # type-check + production build into dist/
 - `src/game/frog.ts`: the frog-on-a-lily-pad launcher.
 - `src/i18n.ts`: UI text in English and Simplified Chinese. The language is picked from the browser on first visit and can be changed in Settings. Static text in `index.html` is tagged with `data-i18n` keys.
 - `src/main.ts`, `src/settings.ts`: DOM UI, input and persisted settings.
-- `src/viewport.ts`: the size the game fills; works around iOS home-screen apps reporting a viewport one status bar short of the screen.
+- `src/viewport.ts`: the size the game fills; works around iPhone home-screen apps reporting a viewport one status bar short of the screen. `src/debug.ts`: on-device diagnostics, opened with `?debug=viewport`, showing what the browser reports and where each tap lands.

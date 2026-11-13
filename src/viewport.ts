@@ -18,17 +18,19 @@ export interface ViewportInfo {
 
 /** Larger gaps are real layout changes (a keyboard, a split screen), not the status-bar bug. */
 const MAX_SHORTFALL = 120;
+/** The bug is seen on iPhones; iPads can have full-width windows that are shorter on purpose. */
+const PHONE_MAX_SHORT_SIDE = 600;
 
 export function screenSize(v: ViewportInfo): { width: number; height: number } {
   const width = v.innerWidth;
   let height = v.innerHeight;
-  if (v.iosStandalone) {
+  const short = Math.min(v.screenWidth, v.screenHeight);
+  if (v.iosStandalone && short < PHONE_MAX_SHORT_SIDE) {
     const long = Math.max(v.screenWidth, v.screenHeight);
-    const short = Math.min(v.screenWidth, v.screenHeight);
     const landscape = width > height;
     const fullWidth = landscape ? long : short;
     const fullHeight = landscape ? short : long;
-    // Only for a full-width app; iPad Split View and Stage Manager windows are smaller on purpose.
+    // Only for a full-width app on a phone; anything else may be smaller on purpose.
     const shortfall = fullHeight - height;
     if (Math.abs(width - fullWidth) <= 1 && shortfall > 0 && shortfall <= MAX_SHORTFALL) height = fullHeight;
   }

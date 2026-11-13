@@ -303,9 +303,11 @@ function resize(): void {
 const phoneNote = $('#phone-note');
 /** Re-measure now and again shortly after: iOS reports the final size late after rotating or returning. */
 let settleTimers: number[] = [];
+let pendingFrame = 0;
 function scheduleResize(): void {
   for (const id of settleTimers) clearTimeout(id);
-  requestAnimationFrame(resize);
+  cancelAnimationFrame(pendingFrame);
+  pendingFrame = requestAnimationFrame(resize);
   settleTimers = [250, 800].map((ms) => window.setTimeout(resize, ms));
 }
 window.addEventListener('resize', scheduleResize);
@@ -316,6 +318,7 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden) scheduleResize();
 });
 resize();
+if (new URLSearchParams(location.search).get('debug') === 'viewport') void import('./debug').then((m) => m.showViewportDebug());
 // The HUD's height can change once its web font arrives.
 void document.fonts?.ready.then(measureHud);
 

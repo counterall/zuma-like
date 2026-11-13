@@ -35,6 +35,20 @@ describe('screenSize (issue #9: fill the whole iPhone screen)', () => {
     expect(screenSize({ ...ipad, innerWidth: 900, innerHeight: 700 })).toEqual({ width: 900, height: 700 });
   });
 
+  it('leaves a full-width but shorter iPad window alone (Stage Manager / windowed apps)', () => {
+    expect(screenSize({ innerWidth: 1366, innerHeight: 924, screenWidth: 1024, screenHeight: 1366, iosStandalone: true })).toEqual({ width: 1366, height: 924 });
+  });
+
+  it('corrects up to 120px short, and no more', () => {
+    expect(screenSize(iphone({ innerHeight: 874 - 120, iosStandalone: true })).height).toBe(874);
+    expect(screenSize(iphone({ innerHeight: 874 - 121, iosStandalone: true })).height).toBe(874 - 121);
+  });
+
+  it('tolerates a 1px rounding difference in width, but not more', () => {
+    expect(screenSize(iphone({ innerWidth: 401, innerHeight: 812, iosStandalone: true })).height).toBe(874);
+    expect(screenSize(iphone({ innerWidth: 400, innerHeight: 812, iosStandalone: true })).height).toBe(812);
+  });
+
   it('ignores a big shortfall, which is a real layout change (e.g. keyboard), not the status-bar bug', () => {
     expect(screenSize(iphone({ innerHeight: 500, iosStandalone: true }))).toEqual({ width: 402, height: 500 });
   });
