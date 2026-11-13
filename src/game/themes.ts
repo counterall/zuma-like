@@ -362,7 +362,7 @@ const classic: Theme = {
   ground: LAWN,
   ballOutline: '#08140a',
   shooter: { light: '#4cc38a', dark: '#17603a', flower: '#ff6fb5' },
-  hole: { core: '#140c04', arms: ['#d9ae6c', '#8f6d45', '#fff3d1'] },
+  hole: { core: '#0b1204', arms: ['#24350a', '#fffbe6', '#4f7a1c'] },
   portal: ['#ffd43b', '#2fd8c0', '#ffffff'],
   ui: { accent: '#ff7a1a', accent2: '#4dd2ff', text: '#ffffff', panel: 'rgba(74, 48, 22, 0.94)' },
   audio: { wave: 'triangle', cutoff: 3800 },

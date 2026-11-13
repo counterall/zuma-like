@@ -59,12 +59,23 @@ describe.each(THEME_ORDER)('%s theme', (id) => {
     if (opacity < 1) expect(theme.ground?.length).toBeGreaterThan(0);
   });
 
-  it.each(theme.balls)('marble %s stands out from the track (≥ 3:1, WCAG non-text contrast)', (ball) => {
-    for (const band of bands) {
-      const outline = theme.ballOutline ? contrast(theme.ballOutline, band) : 0;
-      expect(Math.max(contrast(ball, band), outline), `over ${band}`).toBeGreaterThanOrEqual(3);
-    }
-  });
+  if (theme.ballOutline) {
+    const rim = theme.ballOutline;
+    // The rim draws each marble's edge, so it carries the 3:1 non-text contrast...
+    it(`rims marbles in ${rim}, which stands out from the track (≥ 3:1, WCAG non-text contrast)`, () => {
+      for (const band of bands) expect(contrast(rim, band), `over ${band}`).toBeGreaterThanOrEqual(3);
+    });
+    // ...but each marble's own colour must still be clearly distinct from the rail it rolls on.
+    // Plain RGB distance: a marble coloured like the rail scores about 40-80 here, like the ground about 25-55.
+    it.each(theme.balls)('marble %s is clearly distinct in colour from the track (RGB distance ≥ 100)', (ball) => {
+      const distance = (a: string, b: string) => Math.hypot(...parse(a).map((v, i) => v - parse(b)[i]));
+      for (const band of bands) expect(distance(ball, band), `over ${band}`).toBeGreaterThanOrEqual(100);
+    });
+  } else {
+    it.each(theme.balls)('marble %s stands out from the track (≥ 3:1, WCAG non-text contrast)', (ball) => {
+      for (const band of bands) expect(contrast(ball, band), `over ${band}`).toBeGreaterThanOrEqual(3);
+    });
+  }
 });
 
 describe('theme list', () => {
@@ -100,6 +111,15 @@ describe.each(['classic', 'reef'] as const)('%s rail (issue #5)', (id) => {
     for (const c of [track.edge, track.fill, ...(track.pebbles ?? [])]) {
       const h = hue(c);
       expect(h < 15 || h > 55, `${c} (hue ${h.toFixed(0)}°) is brown/sandy`).toBe(true);
+    }
+  });
+
+  it('keeps brown out of the end-hole swirl too', () => {
+    for (const c of THEMES[id].hole.arms) {
+      const [r, g, b] = parse(c);
+      const saturated = Math.max(r, g, b) - Math.min(r, g, b) > 40;
+      const h = hue(c);
+      expect(saturated && h >= 15 && h <= 55, `${c} (hue ${h.toFixed(0)}°) is brown/sandy`).toBe(false);
     }
   });
 
