@@ -5,6 +5,7 @@ import { Renderer } from './game/renderer';
 import { previewBackground, THEME_ORDER, THEMES, type ThemeId } from './game/themes';
 import { loadSettings, saveSettings } from './settings';
 import { LANG_NAMES, LANGS, setLang, t, translateDom, type Lang } from './i18n';
+import { readViewport, screenSize } from './viewport';
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector<T>(sel)!;
 const $$ = (sel: string): HTMLElement[] => [...document.querySelectorAll<HTMLElement>(sel)];
@@ -58,7 +59,10 @@ const game = new Game({
     meterFill.style.width = `${Math.min(100, progress * 100).toFixed(1)}%`;
     meter.classList.toggle('danger', danger > 0);
   },
-}, () => levelForScreen(window.innerWidth, window.innerHeight));
+}, () => {
+  const { width, height } = screenSize(readViewport());
+  return levelForScreen(width, height);
+});
 
 /** The last result shown, so it can be re-rendered when the language changes. */
 let lastResult: { won: boolean; isBest: boolean } | null = null;
@@ -279,9 +283,14 @@ function measureHud(): void {
   };
 }
 
+const app = $('#app');
+
 function resize(): void {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
+  const { width: w, height: h } = screenSize(readViewport());
+  app.style.width = `${w}px`;
+  app.style.height = `${h}px`;
+  // iOS can leave the page scrolled after rotation or a viewport change; then taps land offset.
+  if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
   // On the title screen, switch to the board that fits the new screen shape. Anywhere else
   // the board stays (scaled to fit): a game in progress keeps it, and after a game ends
   // resetting would wipe the score the result screen shows. "Play again" builds a fresh board.
@@ -292,8 +301,24 @@ function resize(): void {
   phoneNote.hidden = Math.min(w, h) >= 600;
 }
 const phoneNote = $('#phone-note');
-window.addEventListener('resize', resize);
+/** Re-measure now and again shortly after: iOS reports the final size late after rotating or returning. */
+let settleTimers: number[] = [];
+let pendingFrame = 0;
+function scheduleResize(): void {
+  for (const id of settleTimers) clearTimeout(id);
+  cancelAnimationFrame(pendingFrame);
+  pendingFrame = requestAnimationFrame(resize);
+  settleTimers = [250, 800].map((ms) => window.setTimeout(resize, ms));
+}
+window.addEventListener('resize', scheduleResize);
+window.addEventListener('orientationchange', scheduleResize);
+window.addEventListener('pageshow', scheduleResize);
+window.visualViewport?.addEventListener('resize', scheduleResize);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) scheduleResize();
+});
 resize();
+if (new URLSearchParams(location.search).get('debug') === 'viewport') void import('./debug').then((m) => m.showViewportDebug());
 // The HUD's height can change once its web font arrives.
 void document.fonts?.ready.then(measureHud);
 
