@@ -2,17 +2,16 @@ import './style.css';
 import { Game, type GameState } from './game/game';
 import { levelForScreen, sameBoard } from './game/level';
 import { Renderer } from './game/renderer';
-import { THEME_ORDER, THEMES, type ThemeId } from './game/themes';
+import { previewBackground, THEME_ORDER, THEMES, type ThemeId } from './game/themes';
 import { loadSettings, saveSettings } from './settings';
 import { LANG_NAMES, LANGS, setLang, t, translateDom, type Lang } from './i18n';
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector<T>(sel)!;
 const $$ = (sel: string): HTMLElement[] => [...document.querySelectorAll<HTMLElement>(sel)];
 
-const PREVIEW_BG: Record<ThemeId, string> = {
+/** Hand-made tiles for themes whose rail isn't see-through; the rest are built from the theme (see previewBackground). */
+const PREVIEW_BG: Partial<Record<ThemeId, string>> = {
   cosmic: 'radial-gradient(circle at 25% 30%, #ff32a0aa, transparent 55%), radial-gradient(circle at 80% 70%, #1ec8ff99, transparent 55%), #1a0850',
-  reef: 'linear-gradient(180deg, #11d3e0 0 28%, #f2c97d 28% 33%, #0b3048 33% 67%, #f2c97d 67% 72%, #0a8fc4 72%)',
-  classic: 'linear-gradient(180deg, #a6dc55 0 28%, #d9ae6c 28% 33%, #4a321b 33% 67%, #d9ae6c 67% 72%, #73bb37 72%)',
 };
 
 const settings = loadSettings();
@@ -46,6 +45,7 @@ let shownScore = -1;
 const game = new Game({
   onState(state: GameState) {
     hud.hidden = state === 'title';
+    measureHud();
     if (state === 'playing') showScreen(null);
     else if (state === 'paused' && currentScreen !== 'settings') showScreen('pause');
     else if (state === 'won' || state === 'lost') setTimeout(() => showResult(state === 'won'), state === 'won' ? 1400 : 300);
@@ -105,7 +105,7 @@ function buildThemeCards(): void {
     card.dataset.theme = id;
     card.setAttribute('role', 'radio');
     const dots = theme.balls.map((c) => `<span class="dot" style="background:radial-gradient(circle at 35% 35%, #fff8, ${c} 55%); box-shadow:0 0 8px ${c}"></span>`).join('');
-    card.innerHTML = `<div class="preview" style="background:${PREVIEW_BG[id]}">${dots}</div>
+    card.innerHTML = `<div class="preview" style="background:${PREVIEW_BG[id] ?? previewBackground(theme)}">${dots}</div>
       <div><div class="name" data-i18n="theme.${id}.name"></div><div class="desc" data-i18n="theme.${id}.tagline"></div></div>`;
     card.addEventListener('click', () => {
       settings.theme = id;
@@ -265,6 +265,19 @@ window.addEventListener('blur', () => game.pause());
 
 // ---------------------------------------------------------------- Layout & loop
 
+/** Keep floating text (combos, points) clear of the HUD and of notches at the screen sides. */
+function measureHud(): void {
+  if (hud.hidden) return;
+  const style = getComputedStyle(hud);
+  const bottoms = [...hud.children].map((el) => el.getBoundingClientRect().bottom);
+  renderer.labelInsets = {
+    margin: 8,
+    top: Math.max(0, ...bottoms) + 4,
+    left: parseFloat(style.paddingLeft) || 0,
+    right: parseFloat(style.paddingRight) || 0,
+  };
+}
+
 function resize(): void {
   const w = window.innerWidth;
   const h = window.innerHeight;
@@ -274,6 +287,7 @@ function resize(): void {
   if (game.state === 'title' && !sameBoard(game.level, w, h)) game.reset();
   renderer.setLevel(game.level);
   renderer.resize(w, h, window.devicePixelRatio || 1);
+  measureHud();
   phoneNote.hidden = Math.min(w, h) >= 600;
 }
 const phoneNote = $('#phone-note');

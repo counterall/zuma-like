@@ -1,3 +1,4 @@
+import { mix } from './sprites';
 export type ThemeId = 'cosmic' | 'reef' | 'classic';
 export type BallStyle = 'glossy' | 'pearl';
 export type ParticleStyle = 'star' | 'bubble' | 'petal';
@@ -32,6 +33,20 @@ export interface Theme {
   audio: { wave: OscillatorType; cutoff: number };
   drawStatic(ctx: CanvasRenderingContext2D, w: number, h: number): void;
   drawAnimated(ctx: CanvasRenderingContext2D, w: number, h: number, t: number): void;
+}
+
+/**
+ * Background for the theme's tile in Settings: ground above and below a slice of rail,
+ * blended exactly as the renderer composites a see-through rail. Undefined for themes
+ * without a see-through rail (they supply their own art).
+ */
+export function previewBackground(theme: Theme): string | undefined {
+  const { ground, track } = theme;
+  if (!ground || track.opacity === undefined) return undefined;
+  const over = ground[Math.floor(ground.length / 2)];
+  const edge = mix(over, track.edge, track.opacity);
+  const fill = mix(over, track.fill, track.opacity);
+  return `linear-gradient(180deg, ${ground[0]} 0 30%, ${edge} 30% 34%, ${fill} 34% 66%, ${edge} 66% 70%, ${ground[ground.length - 1]} 70%)`;
 }
 
 /** Deterministic PRNG so static backgrounds and animated layers agree. */
@@ -364,7 +379,7 @@ const classic: Theme = {
   shooter: { light: '#4cc38a', dark: '#17603a', flower: '#ff6fb5' },
   hole: { core: '#0b1204', arms: ['#24350a', '#fffbe6', '#4f7a1c'] },
   portal: ['#ffd43b', '#2fd8c0', '#ffffff'],
-  ui: { accent: '#ff7a1a', accent2: '#4dd2ff', text: '#ffffff', panel: 'rgba(74, 48, 22, 0.94)' },
+  ui: { accent: '#ff7a1a', accent2: '#4dd2ff', text: '#ffffff', panel: 'rgba(20, 84, 46, 0.94)' },
   audio: { wave: 'triangle', cutoff: 3800 },
   drawStatic(ctx, w, h) {
     const unit = Math.min(w, h) / 600;

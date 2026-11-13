@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { THEME_ORDER, THEMES } from './themes';
+import { previewBackground, THEME_ORDER, THEMES } from './themes';
 
 function parse(color: string): [number, number, number] {
   if (color.startsWith('#')) {
@@ -126,6 +126,34 @@ describe.each(['classic', 'reef'] as const)('%s rail (issue #5)', (id) => {
   it('has a quiet rim: no glow, and an edge darker than the band', () => {
     expect(track.glowBlur).toBe(0);
     expect(luminance(track.edge)).toBeLessThan(luminance(track.fill));
+  });
+});
+
+describe('Classic settings panel (issue #7)', () => {
+  const ui = THEMES.classic.ui;
+  it('is green, not brown', () => {
+    const h = hue(ui.panel);
+    expect(h > 90 && h < 170, `${ui.panel} (hue ${h.toFixed(0)}°)`).toBe(true);
+  });
+  it('keeps its text readable (≥ 4.5:1)', () => {
+    expect(contrast(ui.text, ui.panel)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe.each(['classic', 'reef'] as const)('%s settings preview tile (issue #7)', (id) => {
+  const theme = THEMES[id];
+  const css = previewBackground(theme) ?? '';
+  const colours = css.match(/#[0-9a-f]{6}|rgb\([^)]*\)/gi) ?? [];
+
+  it('shows the see-through rail as it looks in game, without brown', () => {
+    expect(colours.length).toBeGreaterThan(2);
+    // The band is the rail fill blended over the ground, exactly as the renderer composites it.
+    expect(colours).toContain(blend(theme.track.fill, theme.ground![1], theme.track.opacity!).replace(/ /g, ''));
+    for (const c of colours) {
+      const [r, g, b] = parse(c);
+      const h = hue(c);
+      expect(Math.max(r, g, b) - Math.min(r, g, b) > 40 && h >= 15 && h <= 55, `${c} is brown/sandy`).toBe(false);
+    }
   });
 });
 
