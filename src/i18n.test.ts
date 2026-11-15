@@ -1,5 +1,6 @@
 import html from '../index.html?raw';
 import { afterEach, describe, expect, it } from 'vitest';
+import { LEVELS } from './game/level';
 import { THEME_ORDER } from './game/themes';
 import { detectLang, LANGS, MESSAGES, setLang, t, type MessageKey } from './i18n';
 
@@ -24,6 +25,7 @@ describe('i18n', () => {
   it('translates every key the page and themes reference', () => {
     const used = [...html.matchAll(/data-i18n(?:-aria)?="([^"]+)"/g)].map((m) => m[1]);
     for (const id of THEME_ORDER) used.push(`theme.${id}.name`, `theme.${id}.tagline`);
+    for (const level of LEVELS) used.push(`level.${level.track}`);
     expect(used.length).toBeGreaterThan(10);
     for (const key of used) expect(MESSAGES.en, key).toHaveProperty([key]);
   });
