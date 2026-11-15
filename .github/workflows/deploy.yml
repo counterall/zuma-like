@@ -3,6 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+    # Markdown-only changes (README, CLAUDE.md, …) don't change the site, so they don't deploy.
+    # A push that touches any other file still deploys. Run the workflow by hand to force one.
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
 
 permissions:
