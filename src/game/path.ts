@@ -98,3 +98,41 @@ export function buildSpiral(o: SpiralOptions): TrackPath {
   }
   return new TrackPath(pts);
 }
+
+/**
+ * A path through waypoints with every corner rounded into a circular arc, for tracks made of
+ * straight runs (Switchback, Rim Run). `radius` is one value or one per corner; each is shrunk
+ * if needed so neighbouring arcs never overlap.
+ */
+export function buildRounded(waypoints: Vec[], radius: number | number[], step = 4): TrackPath {
+  const pts: Vec[] = [waypoints[0]];
+  for (let i = 1; i < waypoints.length - 1; i++) {
+    const [a, p, b] = [waypoints[i - 1], waypoints[i], waypoints[i + 1]];
+    const len1 = Math.hypot(p.x - a.x, p.y - a.y);
+    const len2 = Math.hypot(b.x - p.x, b.y - p.y);
+    const d1 = { x: (p.x - a.x) / len1, y: (p.y - a.y) / len1 };
+    const d2 = { x: (b.x - p.x) / len2, y: (b.y - p.y) / len2 };
+    const cross = d1.x * d2.y - d1.y * d2.x;
+    const turn = Math.acos(Math.max(-1, Math.min(1, d1.x * d2.x + d1.y * d2.y)));
+    if (turn < 1e-6) {
+      pts.push(p);
+      continue;
+    }
+    const want = Array.isArray(radius) ? radius[i - 1] : radius;
+    // Tangent length; a straight segment shared by two corners gives each at most half.
+    const half = Math.tan(turn / 2);
+    const r = Math.min(want, (len1 / 2) / half, (len2 / 2) / half);
+    const tl = r * half;
+    const start = { x: p.x - d1.x * tl, y: p.y - d1.y * tl };
+    const side = Math.sign(cross);
+    const c = { x: start.x - d1.y * r * side, y: start.y + d1.x * r * side };
+    const a0 = Math.atan2(start.y - c.y, start.x - c.x);
+    const n = Math.max(2, Math.ceil((r * turn) / step));
+    for (let k = 0; k <= n; k++) {
+      const ang = a0 + side * turn * (k / n);
+      pts.push({ x: c.x + Math.cos(ang) * r, y: c.y + Math.sin(ang) * r });
+    }
+  }
+  pts.push(waypoints[waypoints.length - 1]);
+  return new TrackPath(pts);
+}

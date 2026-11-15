@@ -1,9 +1,10 @@
 import './style.css';
 import { Game, type GameState } from './game/game';
-import { levelForScreen, sameBoard } from './game/level';
+import { createLevel, ENDLESS_START, LEVELS, levelForScreen, sameBoard, type Level } from './game/level';
 import { Renderer } from './game/renderer';
 import { previewBackground, THEME_ORDER, THEMES, type ThemeId } from './game/themes';
 import { loadSettings, saveSettings } from './settings';
+import { bestScore, isUnlocked, loadProgress, recordResult, saveProgress } from './progress';
 import { LANG_NAMES, LANGS, setLang, t, translateDom, type Lang } from './i18n';
 import { debugFromUrl, loadDebug, saveDebug, tapCounter } from './debugFlag';
 import { isIosWebApp, readViewport, readWebAppEnv, screenSize, sizePage } from './viewport';
@@ -17,6 +18,11 @@ const PREVIEW_BG: Partial<Record<ThemeId, string>> = {
 };
 
 const settings = loadSettings();
+const progress = loadProgress(settings.best);
+/** The level being played (or shown behind the menus): LEVELS index, or an endless round from ENDLESS_START. */
+let levelIndex = 0;
+/** Rolled each time endless mode starts, so every run gets its own order of boards. */
+let endlessSeed = 0;
 setLang(settings.lang);
 const canvas = $<HTMLCanvasElement>('#game');
 const renderer = new Renderer(canvas);
@@ -24,6 +30,7 @@ const coarse = matchMedia('(pointer: coarse)').matches;
 
 const screens = {
   title: $('#screen-title'),
+  levels: $('#screen-levels'),
   pause: $('#screen-pause'),
   result: $('#screen-result'),
   settings: $('#screen-settings'),
@@ -62,28 +69,95 @@ const game = new Game({
   },
 }, () => {
   const { width, height } = screenSize(readViewport());
-  return levelForScreen(width, height);
+  return levelForScreen(width, height, levelIndex, endlessSeed);
 });
+
+/** "Level 2 · Switchback", or "Endless · Round 3". */
+function levelTitle(level: Pick<Level, 'index' | 'track' | 'endlessRound'>): string {
+  if (level.endlessRound) return `${t('level.endless')} · ${t('level.round', { n: level.endlessRound })}`;
+  return `${t('level.number', { n: level.index + 1 })} · ${t(`level.${level.track}`)}`;
+}
 
 /** The last result shown, so it can be re-rendered when the language changes. */
 let lastResult: { won: boolean; isBest: boolean } | null = null;
 
 function showResult(won: boolean): void {
-  const isBest = game.score > settings.best;
-  if (isBest) {
-    settings.best = game.score;
-    saveSettings(settings);
-  }
-  lastResult = { won, isBest: isBest && game.score > 0 };
+  const isBest = recordResult(progress, levelIndex, won, game.score);
+  saveProgress(progress);
+  lastResult = { won, isBest };
   renderResult();
+  renderLevels();
   showScreen('result');
 }
 
 function renderResult(): void {
   if (!lastResult) return;
-  $('#result-title').textContent = t(lastResult.won ? 'result.won' : 'result.lost');
+  const { won, isBest } = lastResult;
+  $('#result-level').textContent = levelTitle(game.level);
+  $('#result-title').textContent = t(won ? 'result.won' : 'result.lost');
   $('#result-score').textContent = game.score.toLocaleString();
-  $('#result-best').textContent = lastResult.isBest ? t('result.newBest') : t('result.best', { score: settings.best.toLocaleString() });
+  const best = bestScore(progress, levelIndex);
+  $('#result-best').textContent = isBest ? t('result.newBest') : t('result.best', { score: best.toLocaleString() });
+  const next = $('#btn-next');
+  next.hidden = !won;
+  next.textContent = t(levelIndex >= ENDLESS_START ? 'btn.nextRound' : levelIndex === ENDLESS_START - 1 ? 'btn.endless' : 'btn.nextLevel');
+  const retry = $('#btn-retry');
+  retry.textContent = t(won ? 'btn.playAgain' : 'btn.tryAgain');
+  retry.classList.toggle('primary', !won);
+  retry.classList.toggle('ghost', won);
+}
+
+// ---------------------------------------------------------------- Level select
+
+/** A small picture of a level's track, drawn from the real path. */
+function trackThumb(index: number): string {
+  const level = createLevel(index, 'wide', 16 / 9);
+  const pts = level.path.points.filter((_, i, all) => i % 4 === 0 || i === all.length - 1);
+  const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(0)} ${p.y.toFixed(0)}`).join('');
+  const end = pts[pts.length - 1];
+  return `<svg viewBox="-30 -30 ${level.width + 60} ${level.height + 60}" aria-hidden="true">
+    <path d="${d}" style="fill:none;stroke:var(--accent2)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    <circle cx="${end.x}" cy="${end.y}" r="34" style="fill:var(--accent)"/>
+    <circle cx="${level.shooter.x}" cy="${level.shooter.y}" r="46" fill="#3fbf4f"/></svg>`;
+}
+
+function renderLevels(): void {
+  const list = $('#level-list');
+  list.replaceChildren();
+  const entries = [...LEVELS.map((_, i) => i), ENDLESS_START];
+  for (const index of entries) {
+    const endless = index === ENDLESS_START;
+    const open = isUnlocked(progress, index);
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'level-card';
+    card.disabled = !open;
+    const num = endless ? '∞' : t('level.number', { n: index + 1 });
+    const name = endless ? t('level.endless') : t(`level.${LEVELS[index].track}`);
+    const best = bestScore(progress, index);
+    let desc = '';
+    if (!open) desc = t('level.lockedHint', { n: index });
+    else if (endless) desc = progress.endlessRound ? t('level.furthest', { n: progress.endlessRound }) : t('level.endlessHint');
+    else if (best) desc = t('level.best', { score: best.toLocaleString() });
+    const thumb = endless ? '<span class="infinity">∞</span>' : trackThumb(index);
+    card.innerHTML = `<div class="thumb">${thumb}${open ? '' : '<span class="lock">🔒</span>'}</div>
+      <div class="num"></div><div class="name"></div><div class="desc"></div>`;
+    card.querySelector('.num')!.textContent = num;
+    card.querySelector('.name')!.textContent = name;
+    card.querySelector('.desc')!.textContent = desc;
+    if (!open) card.setAttribute('aria-label', `${name}: ${t('level.locked')}`);
+    card.addEventListener('click', () => {
+      if (endless) levelIndex = -1; // a fresh endless run from the list
+      startLevel(index);
+    });
+    list.appendChild(card);
+  }
+}
+
+function openLevels(): void {
+  if (game.state !== 'title') game.quit();
+  renderLevels();
+  showScreen('levels');
 }
 
 // ---------------------------------------------------------------- Theme & settings
@@ -109,7 +183,8 @@ function buildThemeCards(): void {
     card.type = 'button';
     card.dataset.theme = id;
     card.setAttribute('role', 'radio');
-    const dots = theme.balls.map((c) => `<span class="dot" style="background:radial-gradient(circle at 35% 35%, #fff8, ${c} 55%); box-shadow:0 0 8px ${c}"></span>`).join('');
+    // The five everyday colours; the sixth only appears in endless rounds.
+    const dots = theme.balls.slice(0, 5).map((c) => `<span class="dot" style="background:radial-gradient(circle at 35% 35%, #fff8, ${c} 55%); box-shadow:0 0 8px ${c}"></span>`).join('');
     card.innerHTML = `<div class="preview" style="background:${PREVIEW_BG[id] ?? previewBackground(theme)}">${dots}</div>
       <div><div class="name" data-i18n="theme.${id}.name"></div><div class="desc" data-i18n="theme.${id}.tagline"></div></div>`;
     card.addEventListener('click', () => {
@@ -127,6 +202,7 @@ function applyLang(lang: Lang): void {
   for (const el of $$('.controls-hint')) el.textContent = t(coarse ? 'hint.touch' : 'hint.mouse');
   for (const btn of $$('.lang-btn')) btn.setAttribute('aria-checked', String(btn.dataset.lang === lang));
   renderResult();
+  renderLevels();
   measureHud();
 }
 
@@ -185,12 +261,21 @@ aimOpt.addEventListener('change', () => {
 
 // ---------------------------------------------------------------- Buttons
 
-const startGame = (): void => {
+function startLevel(index: number): void {
+  // Entering endless mode (round 1) starts a new run with its own random order of boards.
+  if (index === ENDLESS_START && levelIndex !== ENDLESS_START) endlessSeed = Math.floor(Math.random() * 2 ** 31);
+  levelIndex = index;
   game.sfx.unlock();
   game.start();
-};
-$('#btn-play').addEventListener('click', startGame);
+  game.showIntro(levelTitle(game.level));
+}
+/** Play the current level (or endless round) again from the start. */
+const startGame = (): void => startLevel(levelIndex);
+const nextLevel = (): void => startLevel(levelIndex + 1);
 for (const el of $$('[data-restart]')) el.addEventListener('click', startGame);
+for (const el of $$('[data-open-levels]')) el.addEventListener('click', openLevels);
+$('#btn-next').addEventListener('click', nextLevel);
+$('#btn-levels-back').addEventListener('click', () => showScreen('title'));
 for (const el of $$('[data-open-settings]')) el.addEventListener('click', openSettings);
 $('#btn-settings-done').addEventListener('click', closeSettings);
 $('#btn-resume').addEventListener('click', () => game.resume());
@@ -257,10 +342,16 @@ window.addEventListener('keydown', (e) => {
     game.swap();
   } else if (e.code === 'KeyP' || e.code === 'Escape') {
     if (currentScreen === 'settings') closeSettings();
+    else if (currentScreen === 'levels') showScreen('title');
     else if (game.state === 'playing') game.pause();
     else if (game.state === 'paused') game.resume();
-  } else if (e.code === 'Enter' && (currentScreen === 'title' || currentScreen === 'result')) {
-    startGame();
+  } else if (e.code === 'Enter' && e.target instanceof HTMLButtonElement) {
+    // A focused button handles Enter itself (as a click); don't also run the shortcut.
+  } else if (e.code === 'Enter' && currentScreen === 'title') {
+    openLevels();
+  } else if (e.code === 'Enter' && currentScreen === 'result') {
+    if (lastResult?.won) nextLevel();
+    else startGame();
   }
 });
 

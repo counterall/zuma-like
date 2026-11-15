@@ -41,10 +41,18 @@
         <div class="card">
           <h1 class="logo"><span class="l1">Chroma</span><span class="l2">Coil</span></h1>
           <p class="tag" data-i18n="title.tag">Shoot marbles into the rolling chain. Match 3 or more of a colour to pop them before they reach the vortex!</p>
-          <button id="btn-play" class="btn primary" data-i18n="title.play">Play</button>
+          <button id="btn-play" class="btn primary" data-open-levels data-i18n="title.play">Play</button>
           <button class="btn ghost" data-open-settings data-i18n="btn.settings">Settings</button>
           <p class="hint controls-hint"></p>
           <p class="phone-note" id="phone-note" data-i18n="title.phoneNote" hidden>Best played on a tablet or desktop. Phones work too: the board reshapes itself to fit when you rotate.</p>
+        </div>
+      </section>
+
+      <section id="screen-levels" class="screen" hidden>
+        <div class="card wide">
+          <h2 data-i18n="levels.title">Choose a level</h2>
+          <div class="levels" id="level-list"></div>
+          <button id="btn-levels-back" class="btn ghost" data-i18n="btn.back">Back</button>
         </div>
       </section>
 
@@ -53,6 +61,7 @@
           <h2 data-i18n="pause.title">Paused</h2>
           <button id="btn-resume" class="btn primary" data-i18n="btn.resume">Resume</button>
           <button class="btn ghost" data-restart data-i18n="btn.restart">Restart</button>
+          <button class="btn ghost" data-open-levels data-i18n="btn.levels">Levels</button>
           <button class="btn ghost" data-open-settings data-i18n="btn.settings">Settings</button>
           <p class="hint controls-hint"></p>
         </div>
@@ -60,11 +69,16 @@
 
       <section id="screen-result" class="screen" hidden>
         <div class="card">
+          <p class="result-level" id="result-level"></p>
           <h2 id="result-title">Cleared!</h2>
           <p class="result-score"><span id="result-score">0</span><small data-i18n="result.points">points</small></p>
           <p class="best" id="result-best"></p>
-          <button class="btn primary" data-restart data-i18n="btn.playAgain">Play again</button>
-          <button class="btn ghost" data-open-settings data-i18n="btn.settings">Settings</button>
+          <div class="result-actions">
+            <button id="btn-next" class="btn primary">Next level</button>
+            <button id="btn-retry" class="btn" data-restart>Play again</button>
+            <button class="btn ghost" data-open-levels data-i18n="btn.levels">Levels</button>
+            <button class="btn ghost" data-open-settings data-i18n="btn.settings">Settings</button>
+          </div>
         </div>
       </section>
 

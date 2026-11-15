@@ -46,8 +46,14 @@ function hue(color: string): number {
 describe.each(THEME_ORDER)('%s theme', (id) => {
   const theme = THEMES[id];
 
-  it('has five marble colours', () => {
-    expect(theme.balls).toHaveLength(5);
+  it('has six marble colours (the sixth is used in endless rounds), all easy to tell apart', () => {
+    expect(theme.balls).toHaveLength(6);
+    const distance = (a: string, b: string) => Math.hypot(...parse(a).map((v, i) => v - parse(b)[i]));
+    for (let i = 0; i < theme.balls.length; i++) {
+      for (let j = i + 1; j < theme.balls.length; j++) {
+        expect(distance(theme.balls[i], theme.balls[j]), `${theme.balls[i]} vs ${theme.balls[j]}`).toBeGreaterThanOrEqual(80);
+      }
+    }
   });
 
   // A see-through rail takes its colour from the ground below, so check it over every ground colour.

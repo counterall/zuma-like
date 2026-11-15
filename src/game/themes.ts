@@ -85,7 +85,7 @@ const cosmicStars = (() => {
 
 const cosmic: Theme = {
   id: 'cosmic',
-  balls: ['#ff3d9a', '#22e4ff', '#9dff3a', '#ffcc1f', '#a35cff'],
+  balls: ['#ff3d9a', '#22e4ff', '#9dff3a', '#ffcc1f', '#a35cff', '#f4f1ff'],
   ballStyle: 'glossy',
   particle: 'star',
   track: {
@@ -167,7 +167,7 @@ const REEF_WATER = ['#11d3e0', '#0a8fc4', '#063a7a'];
 
 const reef: Theme = {
   id: 'reef',
-  balls: ['#ff5a3c', '#ffd93b', '#1fe39a', '#ff4fc3', '#3d7bff'],
+  balls: ['#ff5a3c', '#ffd93b', '#1fe39a', '#ff4fc3', '#3d7bff', '#fffaf0'],
   ballStyle: 'pearl',
   particle: 'bubble',
   // A see-through deep-water channel; pearly rims keep the marbles crisp where the water is darkest.
@@ -359,7 +359,7 @@ const LAWN = ['#a6dc55', '#8fcf45', '#73bb37'];
 const classic: Theme = {
   id: 'classic',
   // Teal rather than grass green, so no marble matches the lawn.
-  balls: ['#ff4d4d', '#ffd43b', '#4dabff', '#2fd8c0', '#c77dff'],
+  balls: ['#ff4d4d', '#ffd43b', '#4dabff', '#2fd8c0', '#c77dff', '#fbfbf2'],
   ballStyle: 'glossy',
   particle: 'petal',
   // A see-through, mossy groove worn into the lawn; dark rims keep the marbles crisp against it.

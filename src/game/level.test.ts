@@ -2,16 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { BALL_DIAMETER, BALL_RADIUS } from './chain';
 import { PAD_RADIUS } from './frog';
 import { SHOOTER_RADIUS } from './game';
-import { createLevel1, fitBoard, levelForScreen, pickLayout, sameBoard, type Level } from './level';
+import { createLevel, ENDLESS_START, fitBoard, LEVELS, levelForScreen, pickLayout, sameBoard, type Level } from './level';
 
 const TRACK_HALF = 30; // widest track edge (Reef, 60) / 2
 
-/** Every board shape the game can produce: the fixed phone layouts, and the wide board across the aspect range. */
-const BOARDS: [string, Level][] = [
-  ['compact', createLevel1('compact')],
-  ['tall', createLevel1('tall')],
-  ...[4 / 3, 1.5, 16 / 10, 16 / 9, 2, 21 / 9].map((a): [string, Level] => [`wide ${a.toFixed(2)}:1`, createLevel1('wide', a)]),
-];
+/** Every board the game can produce: each level on the fixed phone layouts and across the wide board's aspect range. */
+const ASPECTS = [4 / 3, 1.5, 16 / 10, 16 / 9, 2, 21 / 9];
+const BOARDS: [string, Level][] = LEVELS.flatMap((spec, i): [string, Level][] => [
+  [`${spec.track} compact`, createLevel(i, 'compact')],
+  [`${spec.track} tall`, createLevel(i, 'tall')],
+  ...ASPECTS.map((a): [string, Level] => [`${spec.track} wide ${a.toFixed(2)}:1`, createLevel(i, 'wide', a)]),
+]);
 
 describe.each(BOARDS)('%s board', (_, level) => {
   const { path } = level;
@@ -102,8 +103,8 @@ const HUD_SCORE = { w: 210, h: 90 };
 const HUD_BUTTONS = { w: 120, h: 64 };
 
 describe.each(BIG_SCREENS)('%i×%i screen HUD', (w, h) => {
-  it('never hides the track under the score or the buttons', () => {
-    const level = levelForScreen(w, h);
+  it.each(LEVELS.map((_, i) => i))('never hides the track of level %i under the score or the buttons', (index) => {
+    const level = levelForScreen(w, h, index);
     const { scale, ox, oy } = fitBoard(level, w, h);
     const r = TRACK_HALF * scale;
     for (let s = 0; s < level.path.length; s += 6) {
@@ -117,9 +118,38 @@ describe.each(BIG_SCREENS)('%i×%i screen HUD', (w, h) => {
   });
 });
 
+/** Landscape phones (compact board) and their smaller HUD: score + meter top-left, two 46 px buttons top-right. */
+// Spiral Drift (level 1) already ran under the HUD on these phones before levels were added; it is left as it was.
+const PHONE_SCREENS: [number, number][] = [
+  [740, 360],
+  [812, 375],
+  [844, 390],
+  [896, 414],
+  [932, 430],
+];
+const PHONE_HUD_SCORE = { w: 130, h: 72 };
+const PHONE_HUD_BUTTONS = { w: 120, h: 60 };
+
+describe.each(PHONE_SCREENS)('%i×%i phone HUD', (w, h) => {
+  it.each([1, 2])('never hides the track of level %i under the score or the buttons', (index) => {
+    const level = levelForScreen(w, h, index);
+    expect(level.layout).toBe('compact');
+    const { scale, ox, oy } = fitBoard(level, w, h);
+    const r = TRACK_HALF * scale;
+    for (let s = 0; s < level.path.length; s += 6) {
+      const p = level.path.pointAt(s);
+      const x = ox + p.x * scale;
+      const y = oy + p.y * scale;
+      const underScore = x - r < PHONE_HUD_SCORE.w && y - r < PHONE_HUD_SCORE.h;
+      const underButtons = x + r > w - PHONE_HUD_BUTTONS.w && y - r < PHONE_HUD_BUTTONS.h;
+      expect(underScore || underButtons, `track at (${x.toFixed(0)}, ${y.toFixed(0)})`).toBe(false);
+    }
+  });
+});
+
 describe('fitBoard', () => {
   it('centres the board and keeps it on screen', () => {
-    const level = createLevel1('wide', 16 / 9);
+    const level = createLevel(0, 'wide', 16 / 9);
     const fit = fitBoard(level, 1920, 1080);
     expect(fit.ox).toBeGreaterThanOrEqual(0);
     expect(fit.oy).toBeGreaterThanOrEqual(0);
@@ -128,7 +158,7 @@ describe('fitBoard', () => {
   });
 
   it('leaves room for the HUD above portrait boards', () => {
-    expect(fitBoard(createLevel1('tall'), 390, 844).oy).toBeGreaterThan(30);
+    expect(fitBoard(createLevel(0, 'tall'), 390, 844).oy).toBeGreaterThan(30);
   });
 });
 
@@ -154,5 +184,81 @@ describe('pickLayout', () => {
   it('uses the tall board for portrait screens', () => {
     expect(pickLayout(390, 844)).toBe('tall');
     expect(pickLayout(820, 1180)).toBe('tall');
+  });
+});
+
+describe('levels (three tracks, then endless rounds)', () => {
+  it('has Spiral Drift, Switchback and Rim Run, in that order', () => {
+    expect(LEVELS.map((l) => l.track)).toEqual(['spiral', 'switchback', 'rim']);
+    expect(ENDLESS_START).toBe(LEVELS.length);
+  });
+
+  it('gets harder level by level: never fewer colours, always faster', () => {
+    for (let i = 1; i < LEVELS.length; i++) {
+      expect(LEVELS[i].colors).toBeGreaterThanOrEqual(LEVELS[i - 1].colors);
+      expect(LEVELS[i].speed).toBeGreaterThan(LEVELS[i - 1].speed);
+    }
+  });
+
+  it('builds each level on its own track', () => {
+    for (const layout of ['wide', 'compact', 'tall'] as const) {
+      const [spiral, switchback, rim] = LEVELS.map((_, i) => createLevel(i, layout));
+      expect([spiral.track, switchback.track, rim.track]).toEqual(['spiral', 'switchback', 'rim']);
+      // A spiral ends near the frog; a switchback ends at the far side of the board; Rim Run ends in its loop round the frog.
+      const endToFrog = (l: Level) => {
+        const e = l.path.pointAt(l.path.length);
+        return Math.hypot(e.x - l.shooter.x, e.y - l.shooter.y);
+      };
+      expect(endToFrog(switchback)).toBeGreaterThan(Math.max(endToFrog(spiral), endToFrog(rim)));
+      // Switchback's straight rows: most of the track runs level.
+      const level = (l: Level) => l.path.points.filter((p, i, all) => i && Math.abs(p.y - all[i - 1].y) < 1e-6).length / l.path.points.length;
+      expect(level(switchback)).toBeGreaterThan(level(spiral));
+    }
+  });
+});
+
+describe('endless rounds', () => {
+  const rounds = Array.from({ length: 30 }, (_, r) => createLevel(ENDLESS_START + r, 'wide', 16 / 9));
+  const last = createLevel(ENDLESS_START - 1, 'wide', 16 / 9);
+
+  it('use six colours and run faster than the last level', () => {
+    for (const level of rounds) {
+      expect(level.config.colors).toBe(6);
+      expect(level.config.speed).toBeGreaterThan(last.config.speed);
+    }
+  });
+
+  it('pick one of the three tracks, mixing them up and never the same twice in a row', () => {
+    const tracks = rounds.map((l) => l.track);
+    expect(new Set(tracks)).toEqual(new Set(['spiral', 'switchback', 'rim']));
+    for (let i = 1; i < tracks.length; i++) expect(tracks[i]).not.toBe(tracks[i - 1]);
+  });
+
+  it('come in a different order each run (a new seed each time endless starts)', () => {
+    const order = (seed: number) => Array.from({ length: 8 }, (_, r) => createLevel(ENDLESS_START + r, 'wide', 16 / 9, seed).track).join();
+    const orders = new Set(Array.from({ length: 20 }, (_, seed) => order(seed * 7 + 1)));
+    expect(orders.size).toBeGreaterThan(10);
+    const firsts = new Set(Array.from({ length: 30 }, (_, seed) => createLevel(ENDLESS_START, 'wide', 16 / 9, seed).track));
+    expect(firsts.size).toBe(3);
+    for (let seed = 0; seed < 20; seed++) {
+      const tracks = order(seed).split(',');
+      for (let i = 1; i < tracks.length; i++) expect(tracks[i]).not.toBe(tracks[i - 1]);
+    }
+  });
+
+  it('give the same board for a round every time (so resizing or retrying keeps it)', () => {
+    for (let r = 0; r < 10; r++) {
+      expect(createLevel(ENDLESS_START + r, 'tall', 1, 42).track).toBe(createLevel(ENDLESS_START + r, 'compact', 1, 42).track);
+      expect(createLevel(ENDLESS_START + r, 'tall').track).toBe(rounds[r].track);
+    }
+  });
+
+  it('speed up round by round, up to a cap', () => {
+    const speeds = rounds.map((l) => l.config.speed);
+    for (let i = 1; i < speeds.length; i++) expect(speeds[i]).toBeGreaterThanOrEqual(speeds[i - 1]);
+    // Capped at 1.55× the board's base speed (level 3 runs at 1.12×).
+    expect(Math.max(...speeds)).toBeCloseTo((last.config.speed / 1.12) * 1.55, 5);
+    expect(rounds[0].endlessRound).toBe(1);
+    expect(last.endlessRound).toBe(0);
   });
 });

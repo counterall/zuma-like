@@ -339,6 +339,105 @@ h3 {
   opacity: 0.85;
 }
 
+/* ---------------------------------------------------------------- Level select */
+
+.levels {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.level-card {
+  font-family: inherit;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 8px 10px;
+  border-radius: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.12s, border-color 0.12s;
+}
+
+.level-card:not(:disabled):hover {
+  transform: translateY(-2px);
+  border-color: var(--accent2);
+}
+
+.level-card:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.level-card .thumb {
+  position: relative;
+  height: 74px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-card .thumb svg {
+  width: 100%;
+  height: 100%;
+}
+
+.level-card .thumb .infinity {
+  font-size: 54px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.level-card .lock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: inherit;
+}
+
+.level-card .num {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.level-card .name {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.level-card .desc {
+  font-size: 13px;
+  line-height: 1.25;
+  opacity: 0.75;
+}
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.result-level {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
 /* ---------------------------------------------------------------- Settings */
 
 .themes {
@@ -486,6 +585,7 @@ h3 {
 .btn:focus-visible,
 .icon-btn:focus-visible,
 .theme-card:focus-visible,
+.level-card:focus-visible,
 .lang-btn:focus-visible {
   outline: 3px solid var(--accent2);
   outline-offset: 2px;
@@ -495,6 +595,21 @@ h3 {
   .themes {
     grid-template-columns: 1fr;
   }
+  .levels {
+    grid-template-columns: 1fr;
+  }
+  .level-card {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    grid-template-rows: auto auto auto;
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: center;
+  }
+  .level-card .thumb {
+    grid-row: 1 / 4;
+    height: 62px;
+  }
   .theme-card {
     flex-direction: row;
     align-items: center;
@@ -502,5 +617,48 @@ h3 {
   .theme-card .preview {
     width: 92px;
     flex: none;
+  }
+}
+
+/* Landscape phones: all four levels in one row so the list fits without scrolling. */
+@media (max-height: 520px) and (min-width: 521px) {
+  .levels {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .level-card .thumb {
+    height: 52px;
+  }
+  .level-card .name {
+    font-size: 16px;
+  }
+  #screen-levels .card {
+    gap: 8px;
+    padding-block: 16px 14px;
+  }
+  #screen-levels h2 {
+    font-size: 30px;
+  }
+  #screen-pause .card {
+    gap: 8px;
+    padding-block: 16px 14px;
+  }
+  #screen-pause .btn {
+    font-size: 18px;
+    padding-block: 7px 5px;
+  }
+  /* Result: buttons two by two so the whole card fits. */
+  #screen-result .card {
+    width: min(520px, 100%);
+    gap: 8px;
+    padding-block: 16px 14px;
+  }
+  .result-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .result-actions .btn {
+    font-size: 18px;
   }
 }

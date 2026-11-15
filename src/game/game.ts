@@ -124,6 +124,18 @@ export class Game {
     this.setState('playing');
   }
 
+  /** Show a title (e.g. "Level 2 · Switchback") briefly over the board. */
+  showIntro(text: string): void {
+    const { width, height } = this.level;
+    this.floaters.push({ x: width / 2, y: height * 0.3, text, life: 0, max: 2.2, size: Math.min(64, width / 12), color: 'accent' });
+  }
+
+  /** Leave the game for the menus, with a fresh board behind them. */
+  quit(): void {
+    this.reset();
+    this.setState('title');
+  }
+
   pause(): void {
     if (this.state === 'playing') this.setState('paused');
   }
